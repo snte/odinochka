@@ -1,0 +1,47 @@
+{
+  "printWidth": 80,
+  "tabWidth": 2,
+  "useTabs": false,
+  "semi": true,
+  "singleQuote": true,
+  "quoteProps": "as-needed",
+  "jsxSingleQuote": true,
+  "trailingComma": "none",
+  "bracketSpacing": false,
+  "jsxBracketSameLine": false,
+  "arrowParens": "always",
+  "proseWrap": "preserve",
+  "htmlWhitespaceSensitivity": "ignore",
+  "vueIndentScriptAndStyle": true,
+  "endOfLine": "lf",
+
+  "overrides": [
+    {
+      "files": "*.php",
+      "options": {
+        "phpVersion": "7.1",
+        "braceStyle": "1tbs",
+        "trailingCommaPHP": true
+      }
+    },
+    {
+      "files": "*.html.twig",
+      "options": {
+        "twigMultiTags": [
+          "nav,endnav",
+          "switch,case,default,endswitch",
+          "ifchildren,endifchildren",
+          "cache,endcache",
+          "js,endjs"
+        ]
+      }
+    },
+    {
+      "files": "*.md",
+      "options": {
+        "proseWrap": "always"
+      }
+    }
+  ],
+  "twigMelodyPlugins": ["node_modules/prettier-plugin-twig-enhancements"]
+}
