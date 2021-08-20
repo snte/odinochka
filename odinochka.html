@@ -2,208 +2,148 @@
 <html>
   <head>
     <title>Odinochka</title>
-    <style>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link href="assets/main.css" rel="stylesheet" type="text/css" />
 
-    header, footer, article, div {
-      clear:both;
-      margin: 1em 3em 3em 3em;
-    }
-
-    div::after, form::after {
-      content:"";
-      clear:both;
-      display: block;
-    }
-
-    a.tab {
-      display: list-item;
-      list-style: none;
-      text-decoration: none;
-
-      margin-left: 3em;
-      padding-left: 3em;
-
-      width: fit-content;
-      max-width: 90%;
-    }
-
-    header.tab {
-      margin-bottom: .5em;
-      font-size: 110%;
-      display: inline-block;
-    }
-
-    .tab:hover::before, .tab:focus::before {
-      content: "\2716";
-      margin-left:-4.5em;
-      padding-right:3.25em;
-      text-decoration: none;
-      color: #888;
-    }
-
-    header.tab:hover::after, header.tab:focus::after {
-      content: "\00a0\00a0\00a0\2197";
-      text-decoration: none;
-    }
-
-    a.tab[href*="youtube.com/watch?v="]:hover::after,
-    a.tab[href*="youtube.com/watch?v="]:focus::after
-    {
-      content: "\00a0\00a0\00a0\2198";
-      text-decoration: none;
-    }
-
-    fieldset {
-      float:left;
-      border-style: dashed;
-    }
-
-    button[name=import] {display:none}
-    input[name=importfile][value]:not([value=""]) ~ button[name=import] {display:block}
-
-    div#groups {
-      display: flex;
-      flex-direction: column;
-    }
-
-    #ytouter {
-      position:fixed;
-      bottom:0;
-      right:0;
-      resize:horizontal;
-      transform: rotate(-180deg);
-      overflow:hidden;
-    }
-
-    #ytouter iframe {
-      transform: rotate(-180deg);
-      margin: 0;
-      width:100%;
-      height:100%;
-    }
-
-
+    <style id="cssfilterstyle"></style>
+    <style id="faviconstyle" media="not all">
+      a.tab {
+        background-image: var(--bg-favicon);
+        background-repeat: no-repeat;
+        background-position: left center;
+        background-size: 1em 1em;
+      }
     </style>
-    <style>
-    /* toggle based on https://alligator.io/css/collapsible/ */
-    footer {
-      position:sticky;
-      background:white;
-      bottom:0;
-      min-height: 2em;
-      padding-top: .5em;
-      padding-bottom: .5em;
-      border-top: 1px solid black;
-      margin-bottom: 0;
-    }
-
-    .lbl-toggle ~ p {display: inline;}
-
-    form.options, input.toggle { display: none; }
-
-    .toggle:checked + .lbl-toggle + form.options {
-      display: block;
-    }
-    </style>
-    <style id=cssfilterstyle>
-    </style>
-    <style id=faviconstyle media="not all">
-    a.tab {
-      background-image: var(--bg-favicon);
-      background-repeat: no-repeat;
-      background-position: left center;
-      background-size: 1em 1em;
-    }
-    </style>
-    <style id=orderstyle media="not all">
-    div#groups {
-      flex-direction: column-reverse !important;
-    }
+    <style id="orderstyle" media="not all">
+      div#groups {
+        flex-direction: column-reverse !important;
+      }
     </style>
   </head>
-  <body>
 
-      
+  <body>
     <header>
-        <h1>Odinochka</h1>
-        <h2 id=size></h2>
-        URL Filter: <input type="text" name="filter" id=filter />
+      <h1>Odinochka</h1>
+      <h2 id="size"></h2>
+      URL Filter:
+      <input type="text" name="filter" id="filter" />
     </header>
 
-    <div id=groups>
-          <!-- fake data
-          <a class="tab" href="https://mail.google.com/mail/ca/u/1/#inbox" style='--bg-favicon: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAACMklEQVRYR+3W2auOURQG8N9JhowpMynlggtESaIQGXNBSXFBSeHu/AsKVyKlCCncKCfckaEMqVOSIXeGMoTMY2Zap/3W521/b9/RqXPzrcv33WvtZz/rWc/eLbo5Wrp5f00ATQYKBkZiUY0gf+NIJwS6Cv1q1l/Gg0byCwCDMQUDMA1/sLWRAmnNTPTGdPTFSdxuJL+sgVHY+B8Air22YGgTQFczEG0akTh+gRBovejyFizDZPRKO/7AVYTKc5EDEBO2IbP4DK5XibAdg3ANHxECXYr+uInTmaI5AH0wDvPShJxFHOQ53tUDELVjjo+WNhmGTXTcIYfxqPQ/B6AHVmB0qvemNqcKwDHcz5xyLcbjYcasygCidasTa1EvmPwnqgDsxKcMgNmYj+/YUcHAPQTYMKiD+JoTTRWAcMJwxHKEUy5PH8sgCwYuJGcdgl84hGedAVBlxZOwMhXbi1c1hQsAkX8nTc8EvMb+JL6GW7A9l4AZWJyqbMPPDIBbOIWYgM0YWG9yqlqwB28ztC1EXD4fsKuBKRiL9WlyTuBuo1NwLnlAeX1rujWv4GIDAGLJXMzBN+yL+S/yqhh4iTaE/RaxALNSod0ZZdez4tgnWAg2HicP6RB4+UEScxvWGT8PYA2e4D3GJDP5guMlE1qC4ckteyZhfsZ5PMW65IJxVUeECwYbbeUHSXHSAHAJ4XwTE/L4F+hvpP7Xsj812XZZMjEJ4XxBfy7am4/SJgNNBrqdgb/paZI3kaIx2QAAAABJRU5ErkJggg==")' id=2>Inbox - neal@njnm.co - NJNM consulting Mail</a>
-          -->
-    </div>
+    <div id="groups"></div>
 
     <footer>
-        <input id="collapsible" class="toggle" type="checkbox">
-        <label for="collapsible" class="lbl-toggle">&#x2630;</label>
-        <form name=options class=options><fieldset>
-                <legend>Options</legend>
-
+      <input id="collapsible" class="toggle" type="checkbox" />
+      <label for="collapsible" class="lbl-toggle">&#x2630;</label>
+      <form name="options" class="options">
         <fieldset>
+          <legend>Options</legend>
+
+          <fieldset>
             <legend>Duplicates</legend>
-            <input type=radio name=dupe value=keep><label>Keep</label><br/>
-            <input type=radio name=dupe value=update><label>Update</label><br/>
-            <input type=radio name=dupe value=reject><label>Reject</label><br/>
-        </fieldset>
-        <fieldset>
+            <input type="radio" name="dupe" value="keep" />
+            <label>Keep</label>
+            <br />
+            <input type="radio" name="dupe" value="update" />
+            <label>Update</label>
+            <br />
+            <input type="radio" name="dupe" value="reject" />
+            <label>Reject</label>
+            <br />
+          </fieldset>
+          <fieldset>
             <legend>Pinned Tabs</legend>
-            <input type=radio name=pinned value=save><label>Save</label><br/>
-            <input type=radio name=pinned value=skip><label>Skip</label><br/>
-        </fieldset>
-        <fieldset>
+            <input type="radio" name="pinned" value="save" />
+            <label>Save</label>
+            <br />
+            <input type="radio" name="pinned" value="skip" />
+            <label>Skip</label>
+            <br />
+          </fieldset>
+          <fieldset>
             <legend>On restore</legend>
-            <input type=radio name=restore value=remove><label>Remove from list</label><br/>
-            <input type=radio name=restore value=keep><label>Keep</label><br/>
-        </fieldset>
-        <fieldset>
+            <input type="radio" name="restore" value="remove" />
+            <label>Remove from list</label>
+            <br />
+            <input type="radio" name="restore" value="keep" />
+            <label>Keep</label>
+            <br />
+          </fieldset>
+          <fieldset>
             <legend>Restore groups to</legend>
-            <input type=radio name=group value=new><label>Always new window</label><br/>
-            <input type=radio name=group value=smart><label>Smart</label><br/>
-            <input type=radio name=group value=current><label>Always current window</label><br/>
-        </fieldset>
-        <fieldset>
+            <input type="radio" name="group" value="new" />
+            <label>Always new window</label>
+            <br />
+            <input type="radio" name="group" value="smart" />
+            <label>Smart</label>
+            <br />
+            <input type="radio" name="group" value="current" />
+            <label>Always current window</label>
+            <br />
+          </fieldset>
+          <fieldset>
             <legend>Favicons</legend>
-            <input type=radio name=favicon value=show data-media='all'><label>Show</label><br/>
-            <input type=radio name=favicon value=hide data-media='not all'><label>Hide</label><br/>
-        </fieldset>
-        <fieldset>
+            <input type="radio" name="favicon" value="show" data-media="all" />
+            <label>Show</label>
+            <br />
+            <input
+              type="radio"
+              name="favicon"
+              value="hide"
+              data-media="not all"
+            />
+            <label>Hide</label>
+            <br />
+          </fieldset>
+          <fieldset>
             <legend>Sort order</legend>
-            <input type=radio name=order value=asc data-media='all'><label>Oldest First</label><br/>
-            <input type=radio name=order value=desc data-media='not all'><label>Newest First</label><br/>
-        </fieldset>
-        <fieldset>
+            <input type="radio" name="order" value="asc" data-media="all" />
+            <label>Oldest First</label>
+            <br />
+            <input
+              type="radio"
+              name="order"
+              value="desc"
+              data-media="not all"
+            />
+            <label>Newest First</label>
+            <br />
+          </fieldset>
+          <fieldset>
             <legend>Focus after add</legend>
-            <input type=radio name=grabfocus value=always><label>Always</label><br/>
-            <input type=radio name=grabfocus value=never><label>Never</label><br/>
-            <input type=radio name=grabfocus value=unpinned><label>When unpinned</label><br/>
-        </fieldset>
-        <fieldset>
+            <input type="radio" name="grabfocus" value="always" />
+            <label>Always</label>
+            <br />
+            <input type="radio" name="grabfocus" value="never" />
+            <label>Never</label>
+            <br />
+            <input type="radio" name="grabfocus" value="unpinned" />
+            <label>When unpinned</label>
+            <br />
+          </fieldset>
+          <fieldset>
             <legend>Data backup</legend>
-            <input type=file name=importfile id=importfile><br/>
-            <button name=import id=import>Import</button><br/>
-            <button name=export id=export>Export</button>
+            <input type="file" name="importfile" id="importfile" />
+            <br />
+            <button name="import" id="import">Import</button>
+            <br />
+            <button name="export" id="export">Export</button>
+          </fieldset>
+          <div></div>
+          <fieldset style="width: 95%">
+            <legend>Advanced ...</legend>
+            <textarea name="advanced" rows="12" style="width: 100%"></textarea>
+          </fieldset>
         </fieldset>
-        <div></div>
-        <fieldset style="width: 95%">
-            <legend>Advanced...</legend>
-            <textarea name=advanced rows=12 style="width: 100%"></textarea>
-        </fieldset>
-
-        </fieldset></form>
-        <p>
+      </form>
+      <p>
         Copyright njnm 2019.
-
         <a href="https://www.gnu.org/licenses/gpl-3.0.en.html">GPL-3.</a>
-
         <a href="https://github.com/njnmco/odinochka">GitHub</a>
-
         <a href="https://github.com/sponsors/nfultz">Sponsor</a>
-        </p>
-
-        <div id=ytouter><div id=ytdiv></div></div>
+      </p>
+      <div id="ytouter">
+        <div id="ytdiv"></div>
+      </div>
     </footer>
     <script src="odinochka.js"></script>
   </body>

@@ -1,0 +1,103 @@
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica,
+    Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol' !important;
+  color: #444;
+}
+
+div::after,
+form::after {
+  content: '';
+  clear: both;
+  display: block;
+}
+
+a.tab {
+  display: block;
+  text-decoration: none;
+}
+
+header.tab {
+  margin-bottom: 0.5em;
+  font-size: 110%;
+  display: inline-block;
+}
+
+.tab:hover::before,
+.tab:focus::before {
+  content: '\2716';
+  margin-left: -4.5em;
+  padding-right: 3.25em;
+  text-decoration: none;
+  color: #888;
+}
+
+header.tab:hover::after,
+header.tab:focus::after {
+  content: '\00a0\00a0\00a0\2197';
+  text-decoration: none;
+}
+
+a.tab[href*='youtube.com/watch?v=']:hover::after,
+a.tab[href*='youtube.com/watch?v=']:focus::after {
+  content: '\00a0\00a0\00a0\2198';
+  text-decoration: none;
+}
+
+fieldset {
+  float: left;
+  border-style: dashed;
+}
+
+button[name='import'] {
+  display: none;
+}
+
+input[name='importfile'][value]:not([value='']) ~ button[name='import'] {
+  display: block;
+}
+
+div#groups {
+  display: flex;
+  flex-direction: column;
+}
+
+#ytouter {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  resize: horizontal;
+  transform: rotate(-180deg);
+  overflow: hidden;
+}
+
+#ytouter iframe {
+  transform: rotate(-180deg);
+  margin: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* toggle based on https://alligator.io/css/collapsible/ */
+footer {
+  position: sticky;
+  background: white;
+  bottom: 0;
+  min-height: 2em;
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+  border-top: 1px solid black;
+  margin-bottom: 0;
+}
+
+.lbl-toggle ~ p {
+  display: inline;
+}
+
+form.options,
+input.toggle {
+  display: none;
+}
+
+.toggle:checked + .lbl-toggle + form.options {
+  display: block;
+}
