@@ -331,39 +331,6 @@ function tabclick(event) {
   return false;
 }
 
-var ytobserver = null;
-function makeyt(me) {
-  var ytouter = document.getElementById('ytouter');
-  if (ytobserver) ytobserver.disconnect();
-
-  ytVidCode = me.href.replace(/^.*v=/, '').replace(/&.*$/, '');
-  ytouter.innerHTML = `<iframe src=https://www.youtube.com/embed/${ytVidCode}
-       frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-       allowfullscreen ></iframe>`;
-
-  //preserve aspect ratio on resize
-  ytouter.children[0].onload = function () {
-    var ws = window.getComputedStyle(ytouter);
-    var ar = (1.1 * Number.parseFloat(ws.height)) / Number.parseFloat(ws.width);
-    ytobserver = new MutationObserver((ml, obs) => {
-      var nw = Number.parseFloat(ytouter.style.width);
-      var nh = Number.parseFloat(ytouter.style.height);
-      var calc = Math.round(nw * ar);
-      if (nh != calc) {
-        ytouter.style.setProperty('height', `${calc}px`);
-      }
-    });
-
-    // Start observing the target node for configured mutations
-    ytobserver.observe(ytouter, {attributes: true});
-  };
-
-  ytouter.ondblclick = function () {
-    ytouter.innerHTML = '';
-    ytouter.setAttribute('style', ''); //resets the manual sizing
-    if (ytobserver) ytobserver.disconnect();
-    return false;
-  };
 }
 
 function updateCount(store) {
