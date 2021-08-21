@@ -98,7 +98,7 @@ a {
   padding-top: 0.1rem;
 }
 .group {
-  margin-top: 0.8rem;
+  margin-top: 0.6rem;
   padding-top: 0.5rem;
   border-top: 1px dashed rgba(180, 184, 204, 0.6);
 }
@@ -109,6 +109,7 @@ header.tab {
   font-size: 1.2rem;
   padding: 0.35rem;
   margin-bottom: 0.4rem;
+  cursor: pointer;
 }
 header.tab:hover {
   background-color: rgba(180, 184, 204, 0.1);
@@ -139,10 +140,12 @@ a.tab:hover {
   background-color: rgba(180, 184, 204, 0.1);
 }
 
-a.tab[href*='youtube.com/watch?v=']:hover::after,
-a.tab[href*='youtube.com/watch?v=']:focus::after {
-  content: '\00a0\00a0\00a0\2198';
-  text-decoration: none;
+/* Panel style when active */
+.accordion .group a.tab {
+  display: none;
+}
+.accordion .group.active a.tab {
+  display: flex;
 }
 
 .bt-del-group,

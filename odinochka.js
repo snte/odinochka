@@ -3,6 +3,9 @@ render();
 initOptions();
 closeOthers();
 
+// activate accordion (false: multiple open, true: single open)
+initAccordion('.accordion', false);
+
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   if (request.tabs) update(request);
   sendResponse();
@@ -127,7 +130,7 @@ function renderGroup(data, ddiv = null) {
   ddiv = ddiv || document.createElement('div');
   ddiv.id = data.ts;
   ddiv.innerHTML = '';
-  ddiv.className = 'group';
+  ddiv.className = 'group active';
 
   ddiv.append(renderHeader(data), ...data.tabs.map((x) => renderTab(x)));
 
@@ -333,6 +336,28 @@ function groupOpen(event) {
   return false;
 }
 
+function groupCollapse(event) {
+  let me = event.target.parentNode;
+
+  var code = me.parentNode.innerHTML.replace(
+    /draggable="true"|class="tab"|target="_blank"|style="[^"]*"/g,
+    ''
+  );
+
+  chrome.tabs.create({
+    url:
+      'data:text/html;charset=utf-8,' +
+      encodeURIComponent(
+        '<html><style>a{display:block}</style>' +
+          `<title>${me.textContent}</title>` +
+          code +
+          '</html>'
+      )
+  });
+
+  return false;
+}
+
 // Group Functions
 
 function removeAndUpdateCount(request, me) {
@@ -434,6 +459,8 @@ function divclickhandler(event) {
     switch (event.type) {
       case 'click':
         return target.tagName != 'A' || tabClick(event);
+      //case 'dblclick':
+      //  return target.tagName != 'HEADER' || tabClick(event);
       case 'dragstart':
         target.id = 'drag';
         return true;
@@ -449,6 +476,28 @@ function divclickhandler(event) {
   }
   console.log(event); // should be impossible
   return true;
+}
+
+// Collapse
+// https://jsfiddle.net/zmirko/oaqprbLh
+function initAccordion(elem, option) {
+  //document.addEventListener('dblclick', function (e) {
+  document.addEventListener('click', function (e) {
+    if (!e.target.matches(elem + ' header.tab')) return;
+    else {
+      if (!e.target.parentElement.classList.contains('active')) {
+        if (option == true) {
+          var elementList = document.querySelectorAll(elem + ' .group');
+          Array.prototype.forEach.call(elementList, function (e) {
+            e.classList.remove('active');
+          });
+        }
+        e.target.parentElement.classList.add('active');
+      } else {
+        e.target.parentElement.classList.remove('active');
+      }
+    }
+  });
 }
 
 // Drag and Drop
