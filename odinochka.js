@@ -70,7 +70,7 @@ function debounce(func, wait, immediate) {
   };
 }
 
-function cssfilter(x) {
+function cssFilter(x) {
   let node = document.getElementById('cssfilterstyle');
   let newfiltertxt = x.target.value;
   if (newfiltertxt == '') {
@@ -81,6 +81,8 @@ function cssfilter(x) {
     node.innerHTML = `${selector}, ${selector2} {display:none}`;
   }
 }
+
+// Import & Export
 
 function doImport() {
   const selectedFile =
@@ -160,6 +162,8 @@ function doExport() {
 }
 
 function groupclick(event) {
+// Group Events
+
   let me = event.target;
   let ts = parseInt(event.target.parentNode.id);
   let shiftclick = event.shiftKey;
@@ -273,6 +277,8 @@ function groupblur(event) {
   };
 }
 
+// Group Functions
+
 function removeAndUpdateCount(request, me) {
   request.onsuccess = function (event) {
     me.remove();
@@ -302,7 +308,9 @@ function deleteTabFromGroup(ts, i, node) {
   };
 }
 
-function tabclick(event) {
+// Tab Events
+
+function tabClick(event) {
   let me = event.target;
   let ts = parseInt(me.parentNode.id);
   let isX = event.clientX < me.offsetLeft; // if outside box (eg x'd) don't follow link
@@ -339,6 +347,8 @@ function updateCount(store) {
   };
 }
 
+// Options
+
 function initOptions() {
   let DEFAULT_OPTIONS = {
     dupe: 'keep',
@@ -372,7 +382,7 @@ function initOptions() {
     chrome.storage.local.set(o);
   };
 
-  document.getElementById('filter').oninput = debounce(cssfilter, 50);
+  document.getElementById('filter').oninput = debounce(cssFilter, 50);
 
   handle_sty = function (e) {
     document.getElementById(this.name + 'style').media = this.dataset.media;
@@ -412,6 +422,8 @@ function fmtDate(ts) {
   return d.toLocaleString(undefined, fmt); //undefined uses browser default
 }
 
+// Eventhandler
+
 function divclickhandler(event) {
   var target = event.target;
   if (!target || target.className != 'tab') return true;
@@ -435,10 +447,11 @@ function divclickhandler(event) {
     case 'drop':
       return drop(event);
   }
-
   console.log(event); // should be impossible
   return true;
 }
+
+// Render Functions
 
 function renderHeader(data, header = null) {
   header = header || document.createElement('header');
@@ -508,6 +521,8 @@ function render() {
     };
   };
 }
+
+// Update
 
 function update(data) {
   let groupdiv = document.getElementById('groups');
