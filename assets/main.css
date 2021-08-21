@@ -1,25 +1,103 @@
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica,
     Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol' !important;
-  color: #444;
+  color: #555;
+  font-size: 14px;
+  margin: 0;
+}
+a {
+  color: #555;
 }
 
-div::after,
-form::after {
-  content: '';
-  clear: both;
+/* Forms */
+
+.form-control {
   display: block;
+  width: 100%;
+  padding: 0.375rem 0.75rem;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #212529;
+  background-color: #fff;
+  background-clip: padding-box;
+  border: 1px solid #ced4da;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  border-radius: 0.25rem;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+.form-control:focus {
+  color: #212529;
+  background-color: #fff;
+  border-color: #86b7fe;
+  outline: 0;
+  box-shadow: 0 0 0 0.25rem rgb(13 110 253 / 25%);
 }
 
 a.tab {
   display: block;
   text-decoration: none;
+/* Odinochka */
+
+#header,
+#groups,
+#footer {
+  padding: 1rem 2rem;
+}
+#footer {
+  margin-top: 2rem;
 }
 
 header.tab {
   margin-bottom: 0.5em;
   font-size: 110%;
+/* Navbar */
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+}
+.navbar .logo {
+  display: flex;
+  margin: 0;
+  font-size: 2.2rem;
+  background-image: url(img/logo.png);
+  background-repeat: no-repeat;
+  background-size: contain;
+  padding-left: 46px;
+}
+.navbar .logo strong {
+  font-weight: 600;
+}
+.navbar .logo em {
+  font-style: normal;
+  font-weight: 200;
+}
+
+.navbar .bar {
+  display: flex;
+  align-items: center;
+}
+.navbar .info {
+  font-size: 1rem;
+  font-weight: 300;
+  color: #fff;
+  background-color: rgba(180, 184, 204, 0.4);
+  border-radius: 2rem;
+  padding: 0.3rem 1rem;
+}
+
+.navbar .bar > * {
+  margin-left: 1rem;
+}
+.navbar .bar .form-control {
+  width: auto;
   display: inline-block;
+}
+.navbar .bar label {
+  margin-right: 6px;
 }
 
 .tab:hover::before,
@@ -29,6 +107,8 @@ header.tab {
   padding-right: 3.25em;
   text-decoration: none;
   color: #888;
+#groups {
+  padding-top: 0.1rem;
 }
 
 header.tab:hover::after,
@@ -43,6 +123,33 @@ a.tab[href*='youtube.com/watch?v=']:focus::after {
   text-decoration: none;
 }
 
+/* Forms */
+
+.form-control {
+  display: block;
+  width: 100%;
+  padding: 0.375rem 0.75rem;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #212529;
+  background-color: #fff;
+  background-clip: padding-box;
+  border: 1px solid #ced4da;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  border-radius: 0.25rem;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+.form-control:focus {
+  color: #212529;
+  background-color: #fff;
+  border-color: #86b7fe;
+  outline: 0;
+  box-shadow: 0 0 0 0.25rem rgb(13 110 253 / 25%);
+}
+
 fieldset {
   float: left;
   border-style: dashed;
@@ -54,11 +161,6 @@ button[name='import'] {
 
 input[name='importfile'][value]:not([value='']) ~ button[name='import'] {
   display: block;
-}
-
-div#groups {
-  display: flex;
-  flex-direction: column;
 }
 
 #ytouter {

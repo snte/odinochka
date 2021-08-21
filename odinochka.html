@@ -20,22 +20,28 @@
   </head>
 
   <body>
-    <header>
-      <h1>Odinochka</h1>
-      <h2 id="size"></h2>
-      URL Filter:
-      <input type="text" name="filter" id="filter" />
-    </header>
+    <nav id="header" class="navbar">
+      <h1 class="logo">
+        <strong>Odin</strong>
+        <em>ochka</em>
+      </h1>
+      <div class="bar">
+        <div><span class="info" id="size"></span></div>
+        <div>
+          <label>Filter</label>
+          <input type="text" class="form-control" name="filter" id="filter" />
+        </div>
+      </div>
+    </nav>
 
     <div id="groups"></div>
 
-    <footer>
+    <footer id="footer">
       <input id="collapsible" class="toggle" type="checkbox" />
       <label for="collapsible" class="lbl-toggle">&#x2630;</label>
       <form name="options" class="options">
         <fieldset>
           <legend>Options</legend>
-
           <fieldset>
             <legend>Duplicates</legend>
             <input type="radio" name="dupe" value="keep" />
