@@ -161,35 +161,13 @@ function doExport() {
   return false;
 }
 
-function groupclick(event) {
 // Group Events
 
+function groupEdit(event) {
   let me = event.target;
-  let ts = parseInt(event.target.parentNode.id);
   let shiftclick = event.shiftKey;
 
-  if (event.clientX > me.offsetLeft + me.offsetWidth - 10) {
-    var code = me.parentNode.innerHTML.replace(
-      /draggable="true"|class="tab"|target="_blank"|style="[^"]*"/g,
-      ''
-    );
-
-    chrome.tabs.create({
-      url:
-        'data:text/html;charset=utf-8,' +
-        encodeURIComponent(
-          '<html><style>a{display:block}</style>' +
-            `<title>${me.textContent}</title>` +
-            code +
-            '</html>'
-        )
-    });
-
-    return false;
-  }
-
-  if (event.clientX > event.target.offsetLeft && !shiftclick) {
-    // if inside box, make editable
+  if (!shiftclick) {
     if (me.contentEditable == 'false') {
       me.oldText = me.textContent;
       me.contentEditable = 'true';
@@ -197,6 +175,39 @@ function groupclick(event) {
     }
     return;
   }
+}
+
+function groupBlur(event) {
+  var me = event.target;
+  var ts = parseInt(me.parentNode.parentNode.id);
+
+  if (me.contentEditable != 'true') {
+    return;
+  }
+  me.contentEditable = 'false';
+
+  var newtxt = me.textContent;
+  var oldtxt = me.oldText;
+  if (newtxt == oldtxt) return;
+
+  window.indexedDB.open('odinochka', 5).onsuccess = function (event) {
+    var db = event.target.result;
+
+    var tx = db.transaction('tabgroups', 'readwrite');
+    var store = tx.objectStore('tabgroups');
+
+    store.get(ts).onsuccess = function (event) {
+      var data = event.target.result;
+      data.name = newtxt;
+      store.put(data).onsuccess = (e) => renderHeader(data, me.parentNode);
+    };
+  };
+}
+
+function groupDelete(event) {
+  let me = event.target.parentNode;
+  let ts = parseInt(me.parentNode.id);
+  let shiftclick = event.shiftKey;
 
   if (!shiftclick) {
     // if not shift, then was x
@@ -242,39 +253,26 @@ function groupclick(event) {
   };
 }
 
-function groupblur(event) {
-  var me = event.target;
-  var ts = parseInt(event.target.parentNode.id);
+function groupOpen(event) {
+  let me = event.target.parentNode;
 
-  var trimmer = function (s) {
-    var i = s.indexOf('@');
-    if (i != -1) s = s.substr(0, i);
-    return s.trim();
-  };
+  var code = me.parentNode.innerHTML.replace(
+    /draggable="true"|class="tab"|target="_blank"|style="[^"]*"/g,
+    ''
+  );
 
-  if (me.contentEditable != 'true') {
-    return;
-  }
+  chrome.tabs.create({
+    url:
+      'data:text/html;charset=utf-8,' +
+      encodeURIComponent(
+        '<html><style>a{display:block}</style>' +
+          `<title>${me.textContent}</title>` +
+          code +
+          '</html>'
+      )
+  });
 
-  me.contentEditable = 'false';
-
-  var newtxt = trimmer(me.textContent);
-  var oldtxt = trimmer(me.oldText);
-
-  if (newtxt == oldtxt) return;
-
-  window.indexedDB.open('odinochka', 5).onsuccess = function (event) {
-    var db = event.target.result;
-
-    var tx = db.transaction('tabgroups', 'readwrite');
-    var store = tx.objectStore('tabgroups');
-
-    store.get(ts).onsuccess = function (event) {
-      var data = event.target.result;
-      data.name = newtxt;
-      store.put(data).onsuccess = (e) => renderHeader(data, me);
-    };
-  };
+  return false;
 }
 
 // Group Functions
@@ -313,15 +311,9 @@ function deleteTabFromGroup(ts, i, node) {
 function tabClick(event) {
   let me = event.target;
   let ts = parseInt(me.parentNode.id);
-  let isX = event.clientX < me.offsetLeft; // if outside box (eg x'd) don't follow link
   let restore = document.forms['options'].elements['restore'].value;
   let locked = me.parentNode.children[0].textContent.indexOf('lock') > 0;
   let i = Array.from(me.parentNode.children).indexOf(me) - 1;
-
-  if (isX) {
-    deleteTabFromGroup(ts, i, me);
-    return false;
-  }
 
   // Youtube popdown
   //if (event.clientX > me.offsetLeft + me.offsetWidth - 10) {
@@ -339,7 +331,15 @@ function tabClick(event) {
   return false;
 }
 
+function tabDelete(event) {
+  let me = event.target.parentNode;
+  let ts = parseInt(me.parentNode.id);
+  let i = Array.from(me.parentNode.children).indexOf(me) - 1;
+  deleteTabFromGroup(ts, i, me);
+  return false;
 }
+
+//
 
 function updateCount(store) {
   store.index('urls').count().onsuccess = function (e) {
@@ -426,26 +426,51 @@ function fmtDate(ts) {
 
 function divclickhandler(event) {
   var target = event.target;
-  if (!target || target.className != 'tab') return true;
+  if (!target) return true;
+  console.log('target.className: ' + target.className);
 
-  switch (event.type) {
-    case 'click':
-      return target.tagName != 'A' || tabclick(event);
-    case 'dblclick':
-      return target.tagName != 'HEADER' || groupclick(event);
-    case 'blur':
-      return target.tagName != 'HEADER' || groupblur(event);
-    case 'dragstart':
-      target.id = 'drag';
-      return true;
-    case 'dragover':
-      event.preventDefault();
-      return true;
-    case 'dragend':
-      target.id = '';
-      return true;
-    case 'drop':
-      return drop(event);
+  if (target.className == 'bt-del-tab') {
+    switch (event.type) {
+      case 'click':
+        tabDelete(event);
+        return false;
+    }
+  } else if (target.className == 'bt-del-group') {
+    switch (event.type) {
+      case 'click':
+        groupDelete(event);
+        return false;
+    }
+  } else if (target.className == 'bt-open-group') {
+    switch (event.type) {
+      case 'click':
+        groupOpen(event);
+        return false;
+    }
+  } else if (target.className == 'title') {
+    switch (event.type) {
+      case 'click':
+        groupEdit(event);
+        return false;
+      case 'blur':
+        groupBlur(event);
+    }
+  } else if (target.className == 'tab') {
+    switch (event.type) {
+      case 'click':
+        return target.tagName != 'A' || tabClick(event);
+      case 'dragstart':
+        target.id = 'drag';
+        return true;
+      case 'dragover':
+        event.preventDefault();
+        return true;
+      case 'dragend':
+        target.id = '';
+        return true;
+      case 'drop':
+        return drop(event);
+    }
   }
   console.log(event); // should be impossible
   return true;
@@ -455,13 +480,33 @@ function divclickhandler(event) {
 
 function renderHeader(data, header = null) {
   header = header || document.createElement('header');
+  header.textContent = '';
 
-  header.textContent = `${data.name} @ ${fmtDate(data.ts)}`;
+  // add title
+  let title = document.createElement('span');
+  title.className = 'title';
+  title.textContent = `${data.name}`;
+  title.contentEditable = false;
+  header.append(title);
 
   header.className = 'tab';
-  header.contentEditable = false;
   header.draggable = true;
   header.setAttribute('tabindex', '0');
+
+  // add buttons
+  let bt1 = document.createElement('span');
+  bt1.className = 'bt-del-group';
+  header.append(bt1);
+
+  let bt2 = document.createElement('span');
+  bt2.className = 'bt-open-group';
+  header.append(bt2);
+
+  let date = document.createElement('span');
+  date.className = 'info';
+  date.textContent = `${fmtDate(data.ts)}`;
+  header.append(date);
+
   return header;
 }
 
@@ -475,6 +520,12 @@ function renderTab(tab, a = null) {
   a.className = 'tab';
   a.target = tab.pinned ? '_pinned' : '_blank';
   a.draggable = true;
+
+  // add button
+  let bt1 = document.createElement('span');
+  bt1.className = 'bt-del-tab';
+  a.append(bt1);
+
   return a;
 }
 

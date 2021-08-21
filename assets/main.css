@@ -36,9 +36,6 @@ a {
   box-shadow: 0 0 0 0.25rem rgb(13 110 253 / 25%);
 }
 
-a.tab {
-  display: block;
-  text-decoration: none;
 /* Odinochka */
 
 #header,
@@ -50,9 +47,6 @@ a.tab {
   margin-top: 2rem;
 }
 
-header.tab {
-  margin-bottom: 0.5em;
-  font-size: 110%;
 /* Navbar */
 
 .navbar {
@@ -100,27 +94,95 @@ header.tab {
   margin-right: 6px;
 }
 
-.tab:hover::before,
-.tab:focus::before {
-  content: '\2716';
-  margin-left: -4.5em;
-  padding-right: 3.25em;
-  text-decoration: none;
-  color: #888;
 #groups {
   padding-top: 0.1rem;
 }
+.group {
+  margin-top: 0.8rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed rgba(180, 184, 204, 0.6);
+}
 
-header.tab:hover::after,
-header.tab:focus::after {
-  content: '\00a0\00a0\00a0\2197';
+header.tab {
+  display: flex;
+  flex-direction: row;
+  font-size: 1.2rem;
+  padding: 0.35rem;
+  margin-bottom: 0.4rem;
+}
+header.tab:hover {
+  background-color: rgba(180, 184, 204, 0.1);
+}
+
+header.tab .title {
+  font-size: 1.4rem;
+  font-weight: 500;
+}
+header.tab .info {
+  font-size: 0.75rem;
+  color: rgba(180, 184, 204, 0.9);
+  padding-top: 0.32rem;
+  margin-left: auto;
+}
+
+a.tab {
+  font-weight: 200;
   text-decoration: none;
+  display: flex;
+  padding: 0.4rem;
+  padding-left: 2rem;
+  background-repeat: no-repeat;
+  background-position: 0.4rem center;
+  background-size: 16px;
+}
+a.tab:hover {
+  background-color: rgba(180, 184, 204, 0.1);
 }
 
 a.tab[href*='youtube.com/watch?v=']:hover::after,
 a.tab[href*='youtube.com/watch?v=']:focus::after {
   content: '\00a0\00a0\00a0\2198';
   text-decoration: none;
+}
+
+.bt-del-group,
+.bt-open-group,
+.bt-del-tab {
+  display: inline-block;
+  width: 1rem;
+  margin-left: 0.6rem;
+  /*background-color: #fff;*/
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: left center;
+  display: none;
+  opacity: 0.5;
+  /*border: 1px solid #ccc;*/
+}
+.bt-del-group,
+.bt-open-group {
+  width: 1.4rem;
+}
+.bt-del-group:hover,
+.bt-open-group:hover,
+.bt-del-tab:hover {
+  /*background-color: #f00;*/
+  cursor: pointer;
+  opacity: 1;
+}
+
+.bt-del-group,
+.bt-del-tab {
+  background-image: url(img/outline_close_black_48dp.png);
+}
+.bt-open-group {
+  background-image: url(img/outline_open_in_browser_black_48dp.png);
+}
+
+header.tab:hover .bt-del-group,
+header.tab:hover .bt-open-group,
+a.tab:hover .bt-del-tab {
+  display: inline-block;
 }
 
 /* Forms */
