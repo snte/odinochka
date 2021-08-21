@@ -1,41 +1,54 @@
 {
-    "name": "odinochka",
-    "version": "1.1.2",
-    "description": "Open source tab vault",
-    "permissions": ["alarms", "contextMenus", "tabs", "unlimitedStorage", "storage",
-                    "https://www.youtube.com/"],
-    "background": {
-      "scripts": ["background.js"],
-      "persistent": false
+  "name": "odinochka",
+  "version": "1.1.2",
+  "description": "Open source tab vault",
+  "permissions": [
+    "alarms",
+    "contextMenus",
+    "tabs",
+    "unlimitedStorage",
+    "storage",
+    "https://www.youtube.com/"
+  ],
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
+  },
+  "commands": {
+    "odinochka_show": {
+      "suggested_key": {
+        "default": "Alt+Shift+O"
+      },
+      "description": "Show Odinochka"
     },
-	"commands": {
-	  "odinochka_show": {
-		"suggested_key": {
-		  "default": "Alt+Shift+O"
-		},
-		"description": "Show Odinochka"
-	  },
-	  "odinochka_save_tab": {
-		"suggested_key": {
-		  "default": "Alt+T"
-		},
-		"description": "Save Tab"
-	  } ,
-	  "odinochka_save_win": {
-		"suggested_key": {
-		  "default": "Alt+O"
-		},
-		"description": "Save Window"
-	  }
-
-
-	},
-    "browser_action": { },
-    "icons": {
-        "16": "images/odinochka16.png",
-        "32": "images/odinochka32.png",
-        "48": "images/odinochka48.png",
-        "128": "images/odinochka128.png"
+    "odinochka_save_tab": {
+      "suggested_key": {
+        "default": "Alt+T"
+      },
+      "description": "Save Tab"
     },
-    "manifest_version":2
+    "odinochka_save_win": {
+      "suggested_key": {
+        "default": "Alt+O"
+      },
+      "description": "Save Window"
+    }
+  },
+  "browser_action": {
+    "default_icon": {
+      "16": "icons/odinochka16.png",
+      "24": "icons/odinochka24.png",
+      "32": "icons/odinochka32.png",
+      "48": "icons/odinochka48.png",
+      "96": "icons/odinochka96.png"
+    }
+  },
+  "icons": {
+    "16": "icons/odinochka16.png",
+    "24": "icons/odinochka24.png",
+    "32": "icons/odinochka32.png",
+    "48": "icons/odinochka48.png",
+    "96": "icons/odinochka96.png"
+  },
+  "manifest_version": 2
 }
