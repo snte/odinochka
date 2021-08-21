@@ -3,17 +3,11 @@ render();
 initOptions();
 closeOthers();
 
-function newWindow(data) {
-  chrome.windows.create({url: data.urls}, function (w) {
-    w.tabs
-      .filter((t, i) => data.tabs[i].pinned)
-      .forEach((t) => chrome.tabs.update(t.id, {pinned: true}));
-  });
-}
-
-function newTabs(data) {
-  data.tabs.forEach((o) => chrome.tabs.create({url: o.url, pinned: o.pinned}));
-}
+chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+  if (request.tabs) update(request);
+  sendResponse();
+  return true;
+});
 
 function attachUrlListSycher() {
   let groups = document.getElementById('groups');
@@ -54,19 +48,162 @@ function attachUrlListSycher() {
   observer.observe(groups, {childList: true, subtree: true});
 }
 
-function debounce(func, wait, immediate) {
-  let timeout;
-  return function (e) {
-    const context = e,
-      args = arguments;
-    const later = () => {
-      timeout = null;
-      if (!immediate) func.apply(context, args);
+// Tabs and Windows
+
+function newWindow(data) {
+  chrome.windows.create({url: data.urls}, function (w) {
+    w.tabs
+      .filter((t, i) => data.tabs[i].pinned)
+      .forEach((t) => chrome.tabs.update(t.id, {pinned: true}));
+  });
+}
+
+function newTabs(data) {
+  data.tabs.forEach((o) => chrome.tabs.create({url: o.url, pinned: o.pinned}));
+}
+
+function closeOthers() {
+  chrome.tabs.getCurrent((current) =>
+    chrome.tabs.query({url: 'chrome-extension://*/odinochka.html'}, (tabs) =>
+      chrome.tabs.remove(tabs.map((t) => t.id).filter((t) => t != current.id))
+    )
+  );
+}
+
+// Render Functions
+
+function renderHeader(data, header = null) {
+  header = header || document.createElement('header');
+  header.textContent = '';
+
+  // add title
+  let title = document.createElement('span');
+  title.className = 'title';
+  title.textContent = `${data.name}`;
+  title.contentEditable = false;
+  header.append(title);
+
+  header.className = 'tab';
+  header.draggable = true;
+  header.setAttribute('tabindex', '0');
+
+  // add buttons
+  let bt1 = document.createElement('span');
+  bt1.className = 'bt-del-group';
+  header.append(bt1);
+
+  let bt2 = document.createElement('span');
+  bt2.className = 'bt-open-group';
+  header.append(bt2);
+
+  let date = document.createElement('span');
+  date.className = 'info';
+  date.textContent = `${fmtDate(data.ts)}`;
+  header.append(date);
+
+  return header;
+}
+
+function renderTab(tab, a = null) {
+  a = a || document.createElement('a');
+  a.textContent = tab.title;
+  a.href = tab.url;
+  if (tab.favicon) {
+    a.style.setProperty('--bg-favicon', `url("${tab.favicon}")`);
+  }
+  a.className = 'tab';
+  a.target = tab.pinned ? '_pinned' : '_blank';
+  a.draggable = true;
+
+  // add button
+  let bt1 = document.createElement('span');
+  bt1.className = 'bt-del-tab';
+  a.append(bt1);
+
+  return a;
+}
+
+function renderGroup(data, ddiv = null) {
+  ddiv = ddiv || document.createElement('div');
+  ddiv.id = data.ts;
+  ddiv.innerHTML = '';
+  ddiv.className = 'group';
+
+  ddiv.append(renderHeader(data), ...data.tabs.map((x) => renderTab(x)));
+
+  return ddiv;
+}
+
+function render() {
+  // Building tab list
+  let groupdiv = document.getElementById('groups');
+  groupdiv.innerHTML = '';
+  for (var ev of [
+    'click',
+    'dblclick',
+    'dragstart',
+    'dragend',
+    'dragover',
+    'drop'
+  ])
+    groupdiv['on' + ev] = divclickhandler;
+  groupdiv.addEventListener('blur', divclickhandler, true); // onblur won't trigger, but can capture?
+
+  window.indexedDB.open('odinochka', 5).onsuccess = function (event) {
+    let db = event.target.result;
+
+    let tx = db.transaction('tabgroups', 'readonly');
+    let store = tx.objectStore('tabgroups');
+
+    updateCount(store);
+
+    store.openCursor(null, 'prev').onsuccess = function (event) {
+      let cursor = event.target.result;
+      if (cursor) {
+        cursor.continue();
+        groupdiv.appendChild(renderGroup(cursor.value));
+      }
     };
-    const callNow = immediate && !timeout;
-    clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-    if (callNow) func.apply(context, args);
+  };
+}
+
+// Update
+
+function update(data) {
+  let groupdiv = document.getElementById('groups');
+  let child = groupdiv.children.length ? groupdiv.children[0] : null;
+
+  if (child && data.ts == child.id) {
+    groupdiv.replaceChild(renderGroup(data), child);
+  } else {
+    // if child is null, then append
+    groupdiv.insertBefore(renderGroup(data), child);
+  }
+
+  for (let i in data.update) {
+    let node = document.getElementById(i);
+    if (!node) continue;
+    if (data.update[i] == 'd') {
+      node.remove();
+    } else {
+      groupdiv.replaceChild(renderGroup(data.update[i]), node);
+    }
+  }
+
+  window.indexedDB.open('odinochka', 5).onsuccess = function (event) {
+    let db = event.target.result;
+    let tx = db.transaction('tabgroups', 'readonly');
+    let store = tx.objectStore('tabgroups');
+
+    updateCount(store);
+  };
+}
+
+// UI
+
+function updateCount(store) {
+  store.index('urls').count().onsuccess = function (e) {
+    document.getElementById('size').textContent = e.target.result + ' tabs';
   };
 }
 
@@ -80,85 +217,6 @@ function cssFilter(x) {
     selector2 = `div.group:not([data-urls*="${newfiltertxt}"])`;
     node.innerHTML = `${selector}, ${selector2} {display:none}`;
   }
-}
-
-// Import & Export
-
-function doImport() {
-  const selectedFile =
-    document.forms['options'].elements['importfile'].files[0];
-
-  let reader = new FileReader();
-
-  reader.onload = function (event) {
-    let tabs = JSON.parse(event.target.result);
-
-    window.indexedDB.open('odinochka', 5).onsuccess = function (event) {
-      let db = event.target.result;
-
-      let tx = db.transaction('tabgroups', 'readwrite');
-      let store = tx.objectStore('tabgroups');
-      let saveNext = function () {
-        if (tabs.length) {
-          store.put(tabs.pop()).onsuccess = saveNext;
-        } else {
-          render();
-        }
-      };
-      saveNext();
-    };
-  };
-  reader.readAsText(selectedFile);
-
-  return false;
-}
-
-function doExport() {
-  let result = [];
-  window.indexedDB.open('odinochka', 5).onsuccess = function (event) {
-    let db = event.target.result;
-
-    let tx = db.transaction('tabgroups', 'readonly');
-    let store = tx.objectStore('tabgroups');
-
-    updateCount(store);
-
-    store.openCursor(null, 'prev').onsuccess = function (event) {
-      let cursor = event.target.result;
-      if (cursor) {
-        result.push(cursor.value);
-        cursor.continue();
-      } else {
-        // snippet by elite, https://stackoverflow.com/a/45831357
-        let filename = 'odinochka.json';
-        let blob = new Blob([JSON.stringify(result)], {type: 'text/plain'});
-        let e = document.createEvent('MouseEvents'),
-          a = document.createElement('a');
-        a.download = filename;
-        a.href = window.URL.createObjectURL(blob);
-        a.dataset.downloadurl = ['text/plain', a.download, a.href].join(':');
-        e.initEvent(
-          'click',
-          true,
-          false,
-          window,
-          0,
-          0,
-          0,
-          0,
-          0,
-          false,
-          false,
-          false,
-          false,
-          0,
-          null
-        );
-        a.dispatchEvent(e);
-      }
-    };
-  };
-  return false;
 }
 
 // Group Events
@@ -339,89 +397,6 @@ function tabDelete(event) {
   return false;
 }
 
-//
-
-function updateCount(store) {
-  store.index('urls').count().onsuccess = function (e) {
-    document.getElementById('size').textContent = e.target.result + ' tabs';
-  };
-}
-
-// Options
-
-function initOptions() {
-  let DEFAULT_OPTIONS = {
-    dupe: 'keep',
-    restore: 'remove',
-    group: 'smart',
-    pinned: 'skip',
-    favicon: 'show',
-    order: 'desc',
-    grabfocus: 'always',
-    advanced: ''
-  };
-
-  chrome.storage.local.get(DEFAULT_OPTIONS, function (o) {
-    for (let i in o) {
-      if (i == 'advanced') {
-        document.forms['options'].elements[i].value = o[i];
-        continue;
-      }
-      document.forms['options'].elements[i].forEach(
-        (e) => (e.checked = e.value == o[i])
-      );
-    }
-    if (o.favicon == 'show')
-      document.getElementById('faviconstyle').media = 'all'; //set initial state
-    if (o.order == 'asc') document.getElementById('orderstyle').media = 'all'; //set initial state
-  });
-
-  document.forms['options'].onchange = function (e) {
-    let o = {};
-    o[e.target.name] = e.target.value;
-    chrome.storage.local.set(o);
-  };
-
-  document.getElementById('filter').oninput = debounce(cssFilter, 50);
-
-  handle_sty = function (e) {
-    document.getElementById(this.name + 'style').media = this.dataset.media;
-  };
-  document
-    .querySelectorAll('[name=favicon], [name=order]')
-    .forEach((e) => (e.onchange = handle_sty));
-
-  // Import / Export feature
-  document.getElementById('importfile').onchange = function () {
-    this.setAttribute('value', this.value);
-  };
-  document.getElementById('import').onclick = doImport;
-  document.getElementById('export').onclick = doExport;
-}
-
-function closeOthers() {
-  chrome.tabs.getCurrent((current) =>
-    chrome.tabs.query({url: 'chrome-extension://*/odinochka.html'}, (tabs) =>
-      chrome.tabs.remove(tabs.map((t) => t.id).filter((t) => t != current.id))
-    )
-  );
-}
-
-function fmtDate(ts) {
-  let fmt = {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: 'numeric'
-  };
-  let d = new Date();
-  let thisYear = d.getYear();
-  d.setTime(ts);
-  if (d.getYear() != thisYear) fmt.year = 'numeric';
-  return d.toLocaleString(undefined, fmt); //undefined uses browser default
-}
-
 // Eventhandler
 
 function divclickhandler(event) {
@@ -475,141 +450,6 @@ function divclickhandler(event) {
   console.log(event); // should be impossible
   return true;
 }
-
-// Render Functions
-
-function renderHeader(data, header = null) {
-  header = header || document.createElement('header');
-  header.textContent = '';
-
-  // add title
-  let title = document.createElement('span');
-  title.className = 'title';
-  title.textContent = `${data.name}`;
-  title.contentEditable = false;
-  header.append(title);
-
-  header.className = 'tab';
-  header.draggable = true;
-  header.setAttribute('tabindex', '0');
-
-  // add buttons
-  let bt1 = document.createElement('span');
-  bt1.className = 'bt-del-group';
-  header.append(bt1);
-
-  let bt2 = document.createElement('span');
-  bt2.className = 'bt-open-group';
-  header.append(bt2);
-
-  let date = document.createElement('span');
-  date.className = 'info';
-  date.textContent = `${fmtDate(data.ts)}`;
-  header.append(date);
-
-  return header;
-}
-
-function renderTab(tab, a = null) {
-  a = a || document.createElement('a');
-  a.textContent = tab.title;
-  a.href = tab.url;
-  if (tab.favicon) {
-    a.style.setProperty('--bg-favicon', `url("${tab.favicon}")`);
-  }
-  a.className = 'tab';
-  a.target = tab.pinned ? '_pinned' : '_blank';
-  a.draggable = true;
-
-  // add button
-  let bt1 = document.createElement('span');
-  bt1.className = 'bt-del-tab';
-  a.append(bt1);
-
-  return a;
-}
-
-function renderGroup(data, ddiv = null) {
-  ddiv = ddiv || document.createElement('div');
-  ddiv.id = data.ts;
-  ddiv.innerHTML = '';
-  ddiv.className = 'group';
-
-  ddiv.append(renderHeader(data), ...data.tabs.map((x) => renderTab(x)));
-
-  return ddiv;
-}
-
-function render() {
-  // Building tab list
-  let groupdiv = document.getElementById('groups');
-  groupdiv.innerHTML = '';
-  for (var ev of [
-    'click',
-    'dblclick',
-    'dragstart',
-    'dragend',
-    'dragover',
-    'drop'
-  ])
-    groupdiv['on' + ev] = divclickhandler;
-  groupdiv.addEventListener('blur', divclickhandler, true); // onblur won't trigger, but can capture?
-
-  window.indexedDB.open('odinochka', 5).onsuccess = function (event) {
-    let db = event.target.result;
-
-    let tx = db.transaction('tabgroups', 'readonly');
-    let store = tx.objectStore('tabgroups');
-
-    updateCount(store);
-
-    store.openCursor(null, 'prev').onsuccess = function (event) {
-      let cursor = event.target.result;
-      if (cursor) {
-        cursor.continue();
-        groupdiv.appendChild(renderGroup(cursor.value));
-      }
-    };
-  };
-}
-
-// Update
-
-function update(data) {
-  let groupdiv = document.getElementById('groups');
-  let child = groupdiv.children.length ? groupdiv.children[0] : null;
-
-  if (child && data.ts == child.id) {
-    groupdiv.replaceChild(renderGroup(data), child);
-  } else {
-    // if child is null, then append
-    groupdiv.insertBefore(renderGroup(data), child);
-  }
-
-  for (let i in data.update) {
-    let node = document.getElementById(i);
-    if (!node) continue;
-    if (data.update[i] == 'd') {
-      node.remove();
-    } else {
-      groupdiv.replaceChild(renderGroup(data.update[i]), node);
-    }
-  }
-
-  window.indexedDB.open('odinochka', 5).onsuccess = function (event) {
-    let db = event.target.result;
-    let tx = db.transaction('tabgroups', 'readonly');
-    let store = tx.objectStore('tabgroups');
-
-    updateCount(store);
-  };
-}
-
-chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-  if (request.tabs) update(request);
-  sendResponse();
-  return true;
-});
 
 // Drag and Drop
 
@@ -697,6 +537,170 @@ function drop(event) {
       };
     };
   };
+}
+
+// Options
+
+function initOptions() {
+  let DEFAULT_OPTIONS = {
+    dupe: 'keep',
+    restore: 'remove',
+    group: 'smart',
+    pinned: 'skip',
+    favicon: 'show',
+    order: 'desc',
+    grabfocus: 'always',
+    advanced: ''
+  };
+
+  chrome.storage.local.get(DEFAULT_OPTIONS, function (o) {
+    for (let i in o) {
+      if (i == 'advanced') {
+        document.forms['options'].elements[i].value = o[i];
+        continue;
+      }
+      document.forms['options'].elements[i].forEach(
+        (e) => (e.checked = e.value == o[i])
+      );
+    }
+    if (o.favicon == 'show')
+      document.getElementById('faviconstyle').media = 'all'; //set initial state
+    if (o.order == 'asc') document.getElementById('orderstyle').media = 'all'; //set initial state
+  });
+
+  document.forms['options'].onchange = function (e) {
+    let o = {};
+    o[e.target.name] = e.target.value;
+    chrome.storage.local.set(o);
+  };
+
+  document.getElementById('filter').oninput = debounce(cssFilter, 50);
+
+  handle_sty = function (e) {
+    document.getElementById(this.name + 'style').media = this.dataset.media;
+  };
+  document
+    .querySelectorAll('[name=favicon], [name=order]')
+    .forEach((e) => (e.onchange = handle_sty));
+
+  // Import / Export feature
+  document.getElementById('importfile').onchange = function () {
+    this.setAttribute('value', this.value);
+  };
+  document.getElementById('import').onclick = doImport;
+  document.getElementById('export').onclick = doExport;
+}
+
+function debounce(func, wait, immediate) {
+  let timeout;
+  return function (e) {
+    const context = e,
+      args = arguments;
+    const later = () => {
+      timeout = null;
+      if (!immediate) func.apply(context, args);
+    };
+    const callNow = immediate && !timeout;
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+    if (callNow) func.apply(context, args);
+  };
+}
+
+// Import & Export
+
+function doImport() {
+  const selectedFile =
+    document.forms['options'].elements['importfile'].files[0];
+
+  let reader = new FileReader();
+
+  reader.onload = function (event) {
+    let tabs = JSON.parse(event.target.result);
+
+    window.indexedDB.open('odinochka', 5).onsuccess = function (event) {
+      let db = event.target.result;
+
+      let tx = db.transaction('tabgroups', 'readwrite');
+      let store = tx.objectStore('tabgroups');
+      let saveNext = function () {
+        if (tabs.length) {
+          store.put(tabs.pop()).onsuccess = saveNext;
+        } else {
+          render();
+        }
+      };
+      saveNext();
+    };
+  };
+  reader.readAsText(selectedFile);
+
+  return false;
+}
+
+function doExport() {
+  let result = [];
+  window.indexedDB.open('odinochka', 5).onsuccess = function (event) {
+    let db = event.target.result;
+
+    let tx = db.transaction('tabgroups', 'readonly');
+    let store = tx.objectStore('tabgroups');
+
+    updateCount(store);
+
+    store.openCursor(null, 'prev').onsuccess = function (event) {
+      let cursor = event.target.result;
+      if (cursor) {
+        result.push(cursor.value);
+        cursor.continue();
+      } else {
+        // snippet by elite, https://stackoverflow.com/a/45831357
+        let filename = 'odinochka.json';
+        let blob = new Blob([JSON.stringify(result)], {type: 'text/plain'});
+        let e = document.createEvent('MouseEvents'),
+          a = document.createElement('a');
+        a.download = filename;
+        a.href = window.URL.createObjectURL(blob);
+        a.dataset.downloadurl = ['text/plain', a.download, a.href].join(':');
+        e.initEvent(
+          'click',
+          true,
+          false,
+          window,
+          0,
+          0,
+          0,
+          0,
+          0,
+          false,
+          false,
+          false,
+          false,
+          0,
+          null
+        );
+        a.dispatchEvent(e);
+      }
+    };
+  };
+  return false;
+}
+
+// Helper
+
+function fmtDate(ts) {
+  let fmt = {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric'
+  };
+  let d = new Date();
+  let thisYear = d.getYear();
+  d.setTime(ts);
+  if (d.getYear() != thisYear) fmt.year = 'numeric';
+  return d.toLocaleString(undefined, fmt); //undefined uses browser default
 }
 
 // YouTube Functions
