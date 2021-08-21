@@ -1,4 +1,14 @@
-# odinochka
+# Odinochka
+
+## Fork
+
+Forked from [njnmco/odinochka](https://github.com/njnmco/odinochka)
+
+Thanks to njnmco for the great extension. Being another OneTab user looking for
+a better alternative, I was glad finding this, and forked it to make some
+additions, mostly layout and looks for now. Still a work in progress ;)
+
+![odinochka-screen-01](screenshots/odinochka-screen-01.png)
 
 ## OneTab
 
