@@ -90,9 +90,9 @@ function saveTabs(tabs, newGroup = true, show = true) {
 
   window.indexedDB.open('odinochka', 5).onsuccess = function (event) {
     let db = event.target.result;
-
     let tx = db.transaction('tabgroups', 'readwrite');
     let store = tx.objectStore('tabgroups');
+
     store.openCursor(null, 'prev').onsuccess = function (event) {
       // Get the old value that we want to update
       let cursor = newGroup ? null : event.target.result;
@@ -102,6 +102,7 @@ function saveTabs(tabs, newGroup = true, show = true) {
         : {
             ts: new Date().getTime(),
             name: 'Untitled Group',
+            collapsed: 0,
             tabs: []
           };
 

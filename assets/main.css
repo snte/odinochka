@@ -94,11 +94,54 @@ a {
   margin-right: 6px;
 }
 
+.nav {
+  display: flex;
+  flex-wrap: wrap;
+  padding-left: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.nav-link {
+  display: block;
+  padding: 0.5rem;
+  text-decoration: none;
+  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out,
+    border-color 0.15s ease-in-out;
+  cursor: pointer;
+}
+.nav-link .link-text {
+  display: none;
+}
+
+#bt-collapse,
+#bt-expand {
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center;
+  opacity: 0.5;
+  width: 1rem;
+  height: 1rem;
+}
+#bt-collapse:hover,
+#bt-expand:hover {
+  opacity: 1;
+}
+
+#bt-collapse {
+  background-image: url(img/unfold_less_black_24dp.svg);
+}
+#bt-expand {
+  background-image: url(img/unfold_more_black_24dp.svg);
+}
+
+/* Groups & Tabs */
+
 #groups {
   padding-top: 0.1rem;
 }
 .group {
-  margin-top: 0.8rem;
+  margin-top: 0.6rem;
   padding-top: 0.5rem;
   border-top: 1px dashed rgba(180, 184, 204, 0.6);
 }
@@ -109,6 +152,7 @@ header.tab {
   font-size: 1.2rem;
   padding: 0.35rem;
   margin-bottom: 0.4rem;
+  cursor: pointer;
 }
 header.tab:hover {
   background-color: rgba(180, 184, 204, 0.1);
@@ -139,10 +183,12 @@ a.tab:hover {
   background-color: rgba(180, 184, 204, 0.1);
 }
 
-a.tab[href*='youtube.com/watch?v=']:hover::after,
-a.tab[href*='youtube.com/watch?v=']:focus::after {
-  content: '\00a0\00a0\00a0\2198';
-  text-decoration: none;
+/* Panel style when active */
+#groups .group a.tab {
+  display: none;
+}
+#groups .group.active a.tab {
+  display: flex;
 }
 
 .bt-del-group,

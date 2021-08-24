@@ -1,6 +1,8 @@
 attachUrlListSycher();
 render();
 initOptions();
+initNav();
+initAccordion('#groups', false); // activate accordion (false: multiple open, true: single open)
 closeOthers();
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
@@ -127,7 +129,12 @@ function renderGroup(data, ddiv = null) {
   ddiv = ddiv || document.createElement('div');
   ddiv.id = data.ts;
   ddiv.innerHTML = '';
-  ddiv.className = 'group';
+
+  if (data.collapsed == 0) {
+    ddiv.className = 'group active';
+  } else {
+    ddiv.className = 'group';
+  }
 
   ddiv.append(renderHeader(data), ...data.tabs.map((x) => renderTab(x)));
 
@@ -151,7 +158,6 @@ function render() {
 
   window.indexedDB.open('odinochka', 5).onsuccess = function (event) {
     let db = event.target.result;
-
     let tx = db.transaction('tabgroups', 'readonly');
     let store = tx.objectStore('tabgroups');
 
@@ -250,7 +256,6 @@ function groupBlur(event) {
 
   window.indexedDB.open('odinochka', 5).onsuccess = function (event) {
     var db = event.target.result;
-
     var tx = db.transaction('tabgroups', 'readwrite');
     var store = tx.objectStore('tabgroups');
 
@@ -364,6 +369,33 @@ function deleteTabFromGroup(ts, i, node) {
   };
 }
 
+function setGroupCollapse(ts, collapsed) {
+  // Set group collapse in DB object
+  window.indexedDB.open('odinochka', 5).onsuccess = function (event) {
+    var db = event.target.result;
+    var tx = db.transaction('tabgroups', 'readwrite');
+    var store = tx.objectStore('tabgroups');
+
+    store.get(ts).onsuccess = function (event) {
+      var data = event.target.result;
+      data.collapsed = collapsed;
+      store.put(data);
+    };
+  };
+}
+
+function setGroupCollapseAll(collapsed) {
+  var elementList = document.querySelectorAll('#groups .group');
+  Array.prototype.forEach.call(elementList, function (e) {
+    if (collapsed == 1) {
+      e.classList.remove('active');
+    } else {
+      e.classList.add('active');
+    }
+    setGroupCollapse(parseInt(e.id), collapsed);
+  });
+}
+
 // Tab Events
 
 function tabClick(event) {
@@ -434,6 +466,8 @@ function divclickhandler(event) {
     switch (event.type) {
       case 'click':
         return target.tagName != 'A' || tabClick(event);
+      //case 'dblclick':
+      //  return target.tagName != 'HEADER' || tabClick(event);
       case 'dragstart':
         target.id = 'drag';
         return true;
@@ -449,6 +483,30 @@ function divclickhandler(event) {
   }
   console.log(event); // should be impossible
   return true;
+}
+
+// Collapse
+// https://jsfiddle.net/zmirko/oaqprbLh
+function initAccordion(elem, option) {
+  //document.addEventListener('dblclick', function (e) {
+  document.addEventListener('click', function (e) {
+    if (!e.target.matches(elem + ' header.tab')) return;
+    else {
+      if (!e.target.parentElement.classList.contains('active')) {
+        if (option == true) {
+          var elementList = document.querySelectorAll(elem + ' .group');
+          Array.prototype.forEach.call(elementList, function (e) {
+            e.classList.remove('active');
+          });
+        }
+        e.target.parentElement.classList.add('active');
+        setGroupCollapse(parseInt(e.target.parentElement.id), 0);
+      } else {
+        e.target.parentElement.classList.remove('active');
+        setGroupCollapse(parseInt(e.target.parentElement.id), 1);
+      }
+    }
+  });
 }
 
 // Drag and Drop
@@ -479,7 +537,6 @@ function drop(event) {
 
   window.indexedDB.open('odinochka', 5).onsuccess = function (event) {
     let db = event.target.result;
-
     let tx = db.transaction('tabgroups', 'readwrite');
     let store = tx.objectStore('tabgroups');
 
@@ -537,6 +594,20 @@ function drop(event) {
       };
     };
   };
+}
+
+// Navbar
+
+function initNav() {
+  document.getElementById('bt-collapse').onclick = groupCollapseAll;
+  document.getElementById('bt-expand').onclick = groupExpandAll;
+}
+
+function groupCollapseAll() {
+  setGroupCollapseAll(1);
+}
+function groupExpandAll() {
+  setGroupCollapseAll(0);
 }
 
 // Options
@@ -620,9 +691,9 @@ function doImport() {
 
     window.indexedDB.open('odinochka', 5).onsuccess = function (event) {
       let db = event.target.result;
-
       let tx = db.transaction('tabgroups', 'readwrite');
       let store = tx.objectStore('tabgroups');
+
       let saveNext = function () {
         if (tabs.length) {
           store.put(tabs.pop()).onsuccess = saveNext;
@@ -642,7 +713,6 @@ function doExport() {
   let result = [];
   window.indexedDB.open('odinochka', 5).onsuccess = function (event) {
     let db = event.target.result;
-
     let tx = db.transaction('tabgroups', 'readonly');
     let store = tx.objectStore('tabgroups');
 
