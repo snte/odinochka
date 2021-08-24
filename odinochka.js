@@ -130,7 +130,12 @@ function renderGroup(data, ddiv = null) {
   ddiv = ddiv || document.createElement('div');
   ddiv.id = data.ts;
   ddiv.innerHTML = '';
-  ddiv.className = 'group active';
+
+  if (data.collapsed == 0) {
+    ddiv.className = 'group active';
+  } else {
+    ddiv.className = 'group';
+  }
 
   ddiv.append(renderHeader(data), ...data.tabs.map((x) => renderTab(x)));
 
@@ -253,7 +258,6 @@ function groupBlur(event) {
 
   window.indexedDB.open('odinochka', 5).onsuccess = function (event) {
     var db = event.target.result;
-
     var tx = db.transaction('tabgroups', 'readwrite');
     var store = tx.objectStore('tabgroups');
 
@@ -336,28 +340,6 @@ function groupOpen(event) {
   return false;
 }
 
-function groupCollapse(event) {
-  let me = event.target.parentNode;
-
-  var code = me.parentNode.innerHTML.replace(
-    /draggable="true"|class="tab"|target="_blank"|style="[^"]*"/g,
-    ''
-  );
-
-  chrome.tabs.create({
-    url:
-      'data:text/html;charset=utf-8,' +
-      encodeURIComponent(
-        '<html><style>a{display:block}</style>' +
-          `<title>${me.textContent}</title>` +
-          code +
-          '</html>'
-      )
-  });
-
-  return false;
-}
-
 // Group Functions
 
 function removeAndUpdateCount(request, me) {
@@ -386,6 +368,21 @@ function deleteTabFromGroup(ts, i, node) {
         removeAndUpdateCount(store.put(data), node);
       };
     }
+  };
+}
+
+function setGroupCollapse(ts, collapsed) {
+  // Set group collapse in DB object
+  window.indexedDB.open('odinochka', 5).onsuccess = function (event) {
+    var db = event.target.result;
+    var tx = db.transaction('tabgroups', 'readwrite');
+    var store = tx.objectStore('tabgroups');
+
+    store.get(ts).onsuccess = function (event) {
+      var data = event.target.result;
+      data.collapsed = collapsed;
+      store.put(data);
+    };
   };
 }
 
@@ -493,8 +490,10 @@ function initAccordion(elem, option) {
           });
         }
         e.target.parentElement.classList.add('active');
+        setGroupCollapse(parseInt(e.target.parentElement.id), 0);
       } else {
         e.target.parentElement.classList.remove('active');
+        setGroupCollapse(parseInt(e.target.parentElement.id), 1);
       }
     }
   });
@@ -528,7 +527,6 @@ function drop(event) {
 
   window.indexedDB.open('odinochka', 5).onsuccess = function (event) {
     let db = event.target.result;
-
     let tx = db.transaction('tabgroups', 'readwrite');
     let store = tx.objectStore('tabgroups');
 
@@ -669,9 +667,9 @@ function doImport() {
 
     window.indexedDB.open('odinochka', 5).onsuccess = function (event) {
       let db = event.target.result;
-
       let tx = db.transaction('tabgroups', 'readwrite');
       let store = tx.objectStore('tabgroups');
+
       let saveNext = function () {
         if (tabs.length) {
           store.put(tabs.pop()).onsuccess = saveNext;
@@ -691,7 +689,6 @@ function doExport() {
   let result = [];
   window.indexedDB.open('odinochka', 5).onsuccess = function (event) {
     let db = event.target.result;
-
     let tx = db.transaction('tabgroups', 'readonly');
     let store = tx.objectStore('tabgroups');
 
