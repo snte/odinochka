@@ -173,10 +173,10 @@ a.tab[href*='youtube.com/watch?v=']:focus::after {
 
 .bt-del-group,
 .bt-del-tab {
-  background-image: url(img/outline_close_black_48dp.png);
+  background-image: url(img/close_black_24dp.svg);
 }
 .bt-open-group {
-  background-image: url(img/outline_open_in_browser_black_48dp.png);
+  background-image: url(img/open_in_browser_black_24dp.svg);
 }
 
 header.tab:hover .bt-del-group,
