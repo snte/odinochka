@@ -1,10 +1,9 @@
 attachUrlListSycher();
 render();
 initOptions();
+initNav();
+initAccordion('#groups', false); // activate accordion (false: multiple open, true: single open)
 closeOthers();
-
-// activate accordion (false: multiple open, true: single open)
-initAccordion('.accordion', false);
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   if (request.tabs) update(request);
@@ -159,7 +158,6 @@ function render() {
 
   window.indexedDB.open('odinochka', 5).onsuccess = function (event) {
     let db = event.target.result;
-
     let tx = db.transaction('tabgroups', 'readonly');
     let store = tx.objectStore('tabgroups');
 
@@ -386,6 +384,18 @@ function setGroupCollapse(ts, collapsed) {
   };
 }
 
+function setGroupCollapseAll(collapsed) {
+  var elementList = document.querySelectorAll('#groups .group');
+  Array.prototype.forEach.call(elementList, function (e) {
+    if (collapsed == 1) {
+      e.classList.remove('active');
+    } else {
+      e.classList.add('active');
+    }
+    setGroupCollapse(parseInt(e.id), collapsed);
+  });
+}
+
 // Tab Events
 
 function tabClick(event) {
@@ -584,6 +594,20 @@ function drop(event) {
       };
     };
   };
+}
+
+// Navbar
+
+function initNav() {
+  document.getElementById('bt-collapse').onclick = groupCollapseAll;
+  document.getElementById('bt-expand').onclick = groupExpandAll;
+}
+
+function groupCollapseAll() {
+  setGroupCollapseAll(1);
+}
+function groupExpandAll() {
+  setGroupCollapseAll(0);
 }
 
 // Options
