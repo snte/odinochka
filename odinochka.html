@@ -5,6 +5,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <link href="vendor/normalize.min.css" rel="stylesheet" type="text/css" />
     <link href="assets/main.css" rel="stylesheet" type="text/css" />
+    <link href="assets/sidebar.css" rel="stylesheet" type="text/css" />
 
     <style id="cssfilterstyle"></style>
     <style id="faviconstyle" media="not all">
@@ -20,39 +21,18 @@
   </head>
 
   <body>
-    <nav id="header" class="navbar">
-      <h1 class="logo">
-        <strong>Odin</strong>
-        <em>ochka</em>
-      </h1>
-      <div class="bar">
-        <div><span class="info" id="size"></span></div>
-        <div>
-          <label>Filter</label>
-          <input type="text" class="form-control" name="filter" id="filter" />
-        </div>
-        <div>
-          <ul class="nav">
-            <li>
-              <a class="nav-link" id="bt-collapse">
-                <span class="link-text">Collapse</span>
-              </a>
-            </li>
-            <li>
-              <a class="nav-link" id="bt-expand">
-                <span class="link-text">Expand</span>
-              </a>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </nav>
+    <div id="sidebar" class="sidebar">
+      <a class="closebtn" id="bt-sidebar-close">×</a>
 
-    <div id="groups"></div>
+      <!--
+      <ul class="menu">
+        <li><a href="#">About</a></li>
+        <li><a href="#">Services</a></li>
+        <li><a href="#">Clients</a></li>
+        <li><a href="#">Contact</a></li>
+      </ul>
+      -->
 
-    <footer id="footer">
-      <input id="collapsible" class="toggle" type="checkbox" />
-      <label for="collapsible" class="lbl-toggle">&#x2630;</label>
       <form name="options" class="options">
         <fieldset>
           <legend>Options</legend>
@@ -147,22 +127,63 @@
             <button name="export" id="export">Export</button>
           </fieldset>
           <div></div>
-          <fieldset style="width: 95%">
-            <legend>Advanced ...</legend>
-            <textarea name="advanced" rows="12" style="width: 100%"></textarea>
+          <fieldset>
+            <legend>Advanced</legend>
+            <textarea name="advanced" rows="12"></textarea>
           </fieldset>
         </fieldset>
       </form>
-      <p>
+      <footer class="options-footer">
         Copyright njnm 2019.
         <a href="https://www.gnu.org/licenses/gpl-3.0.en.html">GPL-3.</a>
         <a href="https://github.com/njnmco/odinochka">GitHub</a>
         <a href="https://github.com/sponsors/nfultz">Sponsor</a>
-      </p>
+      </footer>
       <div id="ytouter">
         <div id="ytdiv"></div>
       </div>
-    </footer>
+    </div>
+
+    <div id="main" class="main">
+      <nav id="header" class="navbar">
+        <div class="bar bar-left">
+          <div class="sidebar-toggle">
+            <span class="openbtn" id="bt-sidebar-open">
+              <img src="assets/img/menu_black_24dp.svg" />
+            </span>
+          </div>
+          <h1 class="logo">
+            <strong>Odin</strong>
+            <em>ochka</em>
+          </h1>
+        </div>
+        <div class="bar bar-right">
+          <div><span class="info" id="size"></span></div>
+          <div>
+            <label>Filter</label>
+            <input type="text" class="form-control" name="filter" id="filter" />
+          </div>
+          <div>
+            <ul class="nav">
+              <li>
+                <a class="nav-link" id="bt-collapse">
+                  <span class="link-text">Collapse</span>
+                </a>
+              </li>
+              <li>
+                <a class="nav-link" id="bt-expand">
+                  <span class="link-text">Expand</span>
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </nav>
+
+      <div id="groups"></div>
+    </div>
+
     <script src="odinochka.js"></script>
+    <script src="assets/sidebar.js"></script>
   </body>
 </html>
