@@ -1,0 +1,64 @@
+.main {
+  transition: margin-left 0.3s, margin-right 0.3s;
+}
+.sidebar {
+  transition: width 0.3s;
+}
+
+body.sidebar-left {
+  overflow-x: hidden;
+}
+
+.sidebar {
+  height: 100%;
+  width: 0;
+  position: fixed;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  background-color: #ff7c30;
+  overflow-x: hidden;
+}
+
+.sidebar .closebtn {
+  position: absolute;
+  top: 0;
+  right: 25px;
+  font-size: 36px;
+  cursor: pointer;
+  opacity: 0.5;
+}
+.sidebar .closebtn:hover {
+  opacity: 1;
+}
+
+.openbtn {
+  cursor: pointer;
+  border: none;
+}
+
+.sidebar .menu {
+  padding: 0;
+  list-style: none;
+}
+.sidebar .menu a {
+  padding: 8px 8px 8px 32px;
+  text-decoration: none;
+  font-size: 25px;
+  color: #818181;
+  display: block;
+  transition: 0.3s;
+}
+.sidebar .menu a:hover {
+  color: #f1f1f1;
+}
+
+/* On smaller screens, where height is less than 450px, change the style of the sidenav (less padding and a smaller font size) */
+@media screen and (max-height: 450px) {
+  .sidebar {
+    padding-top: 15px;
+  }
+  .sidebar .menu a {
+    font-size: 18px;
+  }
+}

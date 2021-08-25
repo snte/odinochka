@@ -39,12 +39,11 @@ a {
 /* Odinochka */
 
 #header,
-#groups,
-#footer {
+#groups {
   padding: 1rem 2rem;
 }
-#footer {
-  margin-top: 2rem;
+#groups {
+  padding-bottom: 3rem;
 }
 
 /* Navbar */
@@ -83,15 +82,18 @@ a {
   padding: 0.3rem 1rem;
 }
 
-.navbar .bar > * {
-  margin-left: 1rem;
-}
 .navbar .bar .form-control {
   width: auto;
   display: inline-block;
 }
 .navbar .bar label {
   margin-right: 6px;
+}
+.navbar .bar-left > * {
+  margin-right: 0.65rem;
+}
+.navbar .bar-right > * {
+  margin-left: 0.65rem;
 }
 
 .nav {
@@ -232,17 +234,54 @@ a.tab:hover .bt {
 
 /* Options */
 
-fieldset {
-  float: left;
-  border-style: dashed;
+.sidebar,
+.sidebar a {
+  color: rgba(0, 0, 0, 0.6);
+}
+.sidebar footer a,
+.sidebar footer {
+  color: rgba(0, 0, 0, 0.4);
 }
 
 button[name='import'] {
   display: none;
 }
-
 input[name='importfile'][value]:not([value='']) ~ button[name='import'] {
   display: block;
+}
+
+.options {
+  padding: 22px;
+}
+.options > fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.options > fieldset > legend {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+.options fieldset fieldset {
+  border: 0;
+  border-bottom: 1px solid #ffffff38;
+  margin-bottom: 0.8rem;
+  padding: 0.4rem 0 0.8rem 0;
+}
+.options fieldset fieldset legend {
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 2px;
+}
+.options textarea {
+  border: 0;
+  width: 80%;
+  height: 6rem;
+}
+
+.sidebar footer {
+  padding: 22px;
+  padding-top: 0;
 }
 
 #ytouter {
@@ -262,6 +301,7 @@ input[name='importfile'][value]:not([value='']) ~ button[name='import'] {
 }
 
 /* toggle based on https://alligator.io/css/collapsible/ */
+/*
 footer {
   position: sticky;
   background: white;
@@ -285,3 +325,4 @@ input.toggle {
 .toggle:checked + .lbl-toggle + form.options {
   display: block;
 }
+*/
