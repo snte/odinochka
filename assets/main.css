@@ -178,18 +178,8 @@ a.tab:hover {
   background-color: rgba(180, 184, 204, 0.1);
 }
 
-/* Panel style when active */
-#groups .group a.tab {
-  display: none;
-}
-#groups .group.active a.tab {
-  display: flex;
-}
-
-.bt-del-group,
-.bt-open-group-tabs,
-.bt-open-group-list,
-.bt-del-tab {
+header.tab .bt,
+a.tab .bt {
   display: inline-block;
   width: 1rem;
   margin-left: 0.6rem;
@@ -201,17 +191,18 @@ a.tab:hover {
   opacity: 0.5;
   /*border: 1px solid #ccc;*/
 }
-.bt-del-group,
-.bt-open-group-tabs,
-.bt-open-group-list {
-  width: 1.4rem;
+header.tab .bt {
+  width: 1.2rem;
 }
-.bt-del-group:hover,
-.bt-open-group-tabs:hover,
-.bt-open-group-list:hover,
-.bt-del-tab:hover {
+header.tab .bt:hover,
+a.tab .bt:hover {
   cursor: pointer;
   opacity: 1;
+}
+
+header.tab:hover .bt,
+a.tab:hover .bt {
+  display: inline-block;
 }
 
 .bt-del-group,
@@ -219,17 +210,24 @@ a.tab:hover {
   background-image: url(img/close_black_24dp.svg);
 }
 .bt-open-group-tabs {
+  background-image: url(img/launch_black_24dp.svg);
+}
+.bt-open-group-window {
   background-image: url(img/open_in_browser_black_24dp.svg);
 }
 .bt-open-group-list {
-  background-image: url(img/format_list_bulleted_black_24dp.svg);
+  background-image: url(img/wysiwyg_black_24dp.svg);
 }
 
-header.tab:hover .bt-del-group,
-header.tab:hover .bt-open-group-tabs,
-header.tab:hover .bt-open-group-list,
-a.tab:hover .bt-del-tab {
-  display: inline-block;
+/* Panel style when active */
+.group a.tab {
+  display: none;
+}
+.group.active a.tab {
+  display: flex;
+}
+.group.active header + a.tab {
+  margin-top: 0.5rem;
 }
 
 /* Options */

@@ -91,16 +91,20 @@ function renderHeader(data, header = null) {
 
   // add buttons
   let bt1 = document.createElement('span');
-  bt1.className = 'bt-del-group';
+  bt1.className = 'bt bt-del-group';
   header.append(bt1);
 
   let bt2 = document.createElement('span');
-  bt2.className = 'bt-open-group-tabs';
+  bt2.className = 'bt bt-open-group-tabs';
   header.append(bt2);
 
   let bt3 = document.createElement('span');
-  bt3.className = 'bt-open-group-list';
+  bt3.className = 'bt bt-open-group-window';
   header.append(bt3);
+
+  let bt4 = document.createElement('span');
+  bt4.className = 'bt bt-open-group-list';
+  header.append(bt4);
 
   let date = document.createElement('span');
   date.className = 'info';
@@ -123,7 +127,7 @@ function renderTab(tab, a = null) {
 
   // add button
   let bt1 = document.createElement('span');
-  bt1.className = 'bt-del-tab';
+  bt1.className = 'bt bt-del-tab';
   a.append(bt1);
 
   return a;
@@ -340,6 +344,7 @@ function groupOpenList(event) {
   return false;
 }
 
+/*
 function groupOpenTabs(event) {
   let me = event.target.parentNode;
   let ts = parseInt(me.parentNode.id);
@@ -352,6 +357,34 @@ function groupOpenTabs(event) {
     store.get(ts).onsuccess = function (event) {
       var data = event.target.result;
       newTabs(data);
+    };
+  };
+}
+*/
+
+function groupOpenTabs(event) {
+  groupOpen(event, false);
+}
+function groupOpenWindow(event) {
+  groupOpen(event, true);
+}
+
+function groupOpen(event, openwindow) {
+  let me = event.target.parentNode;
+  let ts = parseInt(me.parentNode.id);
+
+  window.indexedDB.open('odinochka', 5).onsuccess = function (event) {
+    let db = event.target.result;
+    let tx = db.transaction('tabgroups', 'readwrite');
+    let store = tx.objectStore('tabgroups');
+
+    store.get(ts).onsuccess = function (event) {
+      var data = event.target.result;
+      if (openwindow) {
+        newWindow(data);
+      } else {
+        newTabs(data);
+      }
     };
   };
 }
@@ -454,25 +487,31 @@ function divclickhandler(event) {
   if (!target) return true;
   console.log('target.className: ' + target.className);
 
-  if (target.className == 'bt-del-tab') {
+  if (target.classList.contains('bt-del-tab')) {
     switch (event.type) {
       case 'click':
         tabDelete(event);
         return false;
     }
-  } else if (target.className == 'bt-del-group') {
+  } else if (target.classList.contains('bt-del-group')) {
     switch (event.type) {
       case 'click':
         groupDelete(event);
         return false;
     }
-  } else if (target.className == 'bt-open-group-tabs') {
+  } else if (target.classList.contains('bt-open-group-tabs')) {
     switch (event.type) {
       case 'click':
         groupOpenTabs(event);
         return false;
     }
-  } else if (target.className == 'bt-open-group-list') {
+  } else if (target.classList.contains('bt-open-group-window')) {
+    switch (event.type) {
+      case 'click':
+        groupOpenWindow(event);
+        return false;
+    }
+  } else if (target.classList.contains('bt-open-group-list')) {
     switch (event.type) {
       case 'click':
         groupOpenList(event);
