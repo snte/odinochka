@@ -187,7 +187,8 @@ a.tab:hover {
 }
 
 .bt-del-group,
-.bt-open-group,
+.bt-open-group-tabs,
+.bt-open-group-list,
 .bt-del-tab {
   display: inline-block;
   width: 1rem;
@@ -201,13 +202,14 @@ a.tab:hover {
   /*border: 1px solid #ccc;*/
 }
 .bt-del-group,
-.bt-open-group {
+.bt-open-group-tabs,
+.bt-open-group-list {
   width: 1.4rem;
 }
 .bt-del-group:hover,
-.bt-open-group:hover,
+.bt-open-group-tabs:hover,
+.bt-open-group-list:hover,
 .bt-del-tab:hover {
-  /*background-color: #f00;*/
   cursor: pointer;
   opacity: 1;
 }
@@ -216,12 +218,16 @@ a.tab:hover {
 .bt-del-tab {
   background-image: url(img/close_black_24dp.svg);
 }
-.bt-open-group {
+.bt-open-group-tabs {
   background-image: url(img/open_in_browser_black_24dp.svg);
+}
+.bt-open-group-list {
+  background-image: url(img/format_list_bulleted_black_24dp.svg);
 }
 
 header.tab:hover .bt-del-group,
-header.tab:hover .bt-open-group,
+header.tab:hover .bt-open-group-tabs,
+header.tab:hover .bt-open-group-list,
 a.tab:hover .bt-del-tab {
   display: inline-block;
 }

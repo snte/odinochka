@@ -95,8 +95,12 @@ function renderHeader(data, header = null) {
   header.append(bt1);
 
   let bt2 = document.createElement('span');
-  bt2.className = 'bt-open-group';
+  bt2.className = 'bt-open-group-tabs';
   header.append(bt2);
+
+  let bt3 = document.createElement('span');
+  bt3.className = 'bt-open-group-list';
+  header.append(bt3);
 
   let date = document.createElement('span');
   date.className = 'info';
@@ -316,26 +320,40 @@ function groupDelete(event) {
   };
 }
 
-function groupOpen(event) {
+function groupOpenList(event) {
   let me = event.target.parentNode;
 
+  var title = me.parentNode.querySelector('.title').innerHTML;
   var code = me.parentNode.innerHTML.replace(
-    /draggable="true"|class="tab"|target="_blank"|style="[^"]*"/g,
+    /draggable="true"|class="tab"|target="_blank"|style="[^"]*"|tabindex="[^"]*"|contenteditable="[^"]*"/g,
     ''
   );
-
   chrome.tabs.create({
     url:
       'data:text/html;charset=utf-8,' +
       encodeURIComponent(
-        '<html><style>a{display:block}</style>' +
-          `<title>${me.textContent}</title>` +
+        `<html><head><title>${title}</title><style>body{font-family:-apple-system,sans-serif;padding:1rem} a,.title,.info{display:block} .title{font-size:2rem} header{margin-bottom:1rem}</style></head><body>` +
           code +
-          '</html>'
+          '</body></html>'
       )
   });
-
   return false;
+}
+
+function groupOpenTabs(event) {
+  let me = event.target.parentNode;
+  let ts = parseInt(me.parentNode.id);
+
+  window.indexedDB.open('odinochka', 5).onsuccess = function (event) {
+    let db = event.target.result;
+    let tx = db.transaction('tabgroups', 'readwrite');
+    let store = tx.objectStore('tabgroups');
+
+    store.get(ts).onsuccess = function (event) {
+      var data = event.target.result;
+      newTabs(data);
+    };
+  };
 }
 
 // Group Functions
@@ -448,10 +466,16 @@ function divclickhandler(event) {
         groupDelete(event);
         return false;
     }
-  } else if (target.className == 'bt-open-group') {
+  } else if (target.className == 'bt-open-group-tabs') {
     switch (event.type) {
       case 'click':
-        groupOpen(event);
+        groupOpenTabs(event);
+        return false;
+    }
+  } else if (target.className == 'bt-open-group-list') {
+    switch (event.type) {
+      case 'click':
+        groupOpenList(event);
         return false;
     }
   } else if (target.className == 'title') {
