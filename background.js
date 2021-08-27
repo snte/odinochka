@@ -3,34 +3,39 @@ chrome.runtime.onInstalled.addListener(function () {
   // Limited to six - see also chrome.contextMenus.ACTION_MENU_TOP_LEVEL_LIMIT
   chrome.contextMenus.create({
     id: 'odinochka_show',
-    title: 'show',
-    contexts: ['browser_action']
-  });
-  chrome.contextMenus.create({
-    id: 'odinochka_help',
-    title: 'help',
-    contexts: ['browser_action']
-  });
-  chrome.contextMenus.create({
-    id: 'odinochka_sep',
-    type: 'separator',
+    title: 'Show Odinochka',
     contexts: ['browser_action']
   });
   chrome.contextMenus.create({
     id: 'odinochka_save_win',
-    title: 'save win',
+    title: 'Save all Tabs',
+    contexts: ['browser_action']
+  });
+  chrome.contextMenus.create({
+    id: 'odinochka_save_win_left',
+    title: 'Save all Tabs on Left',
+    contexts: ['browser_action']
+  });
+  chrome.contextMenus.create({
+    id: 'odinochka_save_win_right',
+    title: 'Save all Tabs on Right',
     contexts: ['browser_action']
   });
   chrome.contextMenus.create({
     id: 'odinochka_save_all',
-    title: 'save all',
+    title: 'Save Tabs from all Windows',
+    contexts: ['browser_action']
+  });
+  chrome.contextMenus.create({
+    id: 'odinochka_help',
+    title: 'Help',
     contexts: ['browser_action']
   });
 
   // On page
   chrome.contextMenus.create({
     id: 'odinochka_save_link',
-    title: 'save link',
+    title: 'Save link to Odinochka',
     contexts: ['link']
   });
 
@@ -246,6 +251,39 @@ function command_handler(command, showOnSingleTab = false, details = null) {
   if (command == 'odinochka_save_win') {
     chrome.tabs.query({windowId: chrome.windows.WINDOW_ID_CURRENT}, saveTabs);
   }
+  if (command == 'odinochka_save_win_left') {
+    // get all the tabs in current window
+    chrome.tabs.query({currentWindow: true}, (tabs) => {
+      let result = [];
+      for (const tab of tabs) {
+        result.push(tab);
+        // stop when reached the active tab
+        if (tab.active) {
+          break;
+        }
+      }
+      saveTabs(result, true);
+    });
+  }
+  if (command == 'odinochka_save_win_right') {
+    // get all the tabs in current window
+    chrome.tabs.query({currentWindow: true}, (tabs) => {
+      let activeIndex;
+      let result = [];
+      for (const tab of tabs) {
+        // set the activeIndex so we wont have to run a loop on the tabs twice
+        if (tab.active) {
+          activeIndex = tab.index;
+        }
+        // tabs to the right of the active tab will have higher index
+        if (typeof activeIndex !== 'undefined' && tab.index >= activeIndex) {
+          result.push(tab);
+        }
+      }
+      saveTabs(result, true);
+    });
+  }
+
   if (command == 'odinochka_save_all') {
     chrome.windows.getAll((ws) =>
       ws.forEach((w) => chrome.tabs.query({windowId: w.id}, saveTabs))
