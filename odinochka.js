@@ -485,7 +485,6 @@ function tabDelete(event) {
 function divclickhandler(event) {
   var target = event.target;
   if (!target) return true;
-  console.log('target.className: ' + target.className);
 
   if (target.classList.contains('bt-del-tab')) {
     switch (event.type) {
