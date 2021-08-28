@@ -1,9 +1,6 @@
-attachUrlListSycher();
-render();
-initOptions();
-initNav();
-initAccordion('#groups', false); // activate accordion (false: multiple open, true: single open)
-closeOthers();
+document.addEventListener('DOMContentLoaded', function () {
+  init();
+});
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   if (request.tabs) update(request);
@@ -11,9 +8,17 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   return true;
 });
 
-function attachUrlListSycher() {
-  let groups = document.getElementById('groups');
+function init() {
+  attachUrlListObserver();
+  render();
+  initOptions();
+  initNav();
+  initAccordion('#groups', false); // activate accordion (false: multiple open, true: single open)
+  closeOthers();
+}
 
+function attachUrlListObserver() {
+  let groups = document.getElementById('groups');
   let RSEP = '\036';
 
   let observer = new MutationObserver((ml, obs) => {
@@ -74,12 +79,46 @@ function closeOthers() {
 
 // Render Functions
 
+function render() {
+  // Building tab list
+  let groupdiv = document.getElementById('groups');
+  groupdiv.innerHTML = '';
+  for (var ev of [
+    'click',
+    'dblclick',
+    'dragstart',
+    'dragend',
+    'dragenter',
+    'dragleave',
+    'dragover',
+    'drop'
+  ])
+    groupdiv['on' + ev] = divClickHandler;
+  groupdiv.addEventListener('blur', divClickHandler, true); // onblur won't trigger, but can capture?
+
+  window.indexedDB.open('odinochka', 5).onsuccess = function (e) {
+    let db = e.target.result;
+    let tx = db.transaction('tabgroups', 'readonly');
+    let store = tx.objectStore('tabgroups');
+
+    updateCount(store);
+
+    store.openCursor(null, 'prev').onsuccess = function (e) {
+      let cursor = e.target.result;
+      if (cursor) {
+        cursor.continue();
+        groupdiv.appendChild(renderGroup(cursor.value));
+      }
+    };
+  };
+}
+
 function renderHeader(data, header = null) {
   header = header || document.createElement('header');
   header.textContent = '';
 
   // add title
-  let title = document.createElement('span');
+  let title = document.createElement('h2');
   title.className = 'title';
   title.textContent = `${data.name}`;
   title.contentEditable = false;
@@ -90,20 +129,20 @@ function renderHeader(data, header = null) {
   header.setAttribute('tabindex', '0');
 
   // add buttons
-  let bt1 = document.createElement('span');
-  bt1.className = 'bt bt-del-group';
+  let bt1 = document.createElement('button');
+  bt1.className = 'del-group';
   header.append(bt1);
 
-  let bt2 = document.createElement('span');
-  bt2.className = 'bt bt-open-group-tabs';
+  let bt2 = document.createElement('button');
+  bt2.className = 'open-group-tabs';
   header.append(bt2);
 
-  let bt3 = document.createElement('span');
-  bt3.className = 'bt bt-open-group-window';
+  let bt3 = document.createElement('button');
+  bt3.className = 'open-group-window';
   header.append(bt3);
 
-  let bt4 = document.createElement('span');
-  bt4.className = 'bt bt-open-group-list';
+  let bt4 = document.createElement('button');
+  bt4.className = 'open-group-list';
   header.append(bt4);
 
   let date = document.createElement('span');
@@ -126,8 +165,8 @@ function renderTab(tab, a = null) {
   a.draggable = true;
 
   // add button
-  let bt1 = document.createElement('span');
-  bt1.className = 'bt bt-del-tab';
+  let bt1 = document.createElement('button');
+  bt1.className = 'del-tab';
   a.append(bt1);
 
   return a;
@@ -147,38 +186,6 @@ function renderGroup(data, ddiv = null) {
   ddiv.append(renderHeader(data), ...data.tabs.map((x) => renderTab(x)));
 
   return ddiv;
-}
-
-function render() {
-  // Building tab list
-  let groupdiv = document.getElementById('groups');
-  groupdiv.innerHTML = '';
-  for (var ev of [
-    'click',
-    'dblclick',
-    'dragstart',
-    'dragend',
-    'dragover',
-    'drop'
-  ])
-    groupdiv['on' + ev] = divclickhandler;
-  groupdiv.addEventListener('blur', divclickhandler, true); // onblur won't trigger, but can capture?
-
-  window.indexedDB.open('odinochka', 5).onsuccess = function (event) {
-    let db = event.target.result;
-    let tx = db.transaction('tabgroups', 'readonly');
-    let store = tx.objectStore('tabgroups');
-
-    updateCount(store);
-
-    store.openCursor(null, 'prev').onsuccess = function (event) {
-      let cursor = event.target.result;
-      if (cursor) {
-        cursor.continue();
-        groupdiv.appendChild(renderGroup(cursor.value));
-      }
-    };
-  };
 }
 
 // Update
@@ -204,8 +211,8 @@ function update(data) {
     }
   }
 
-  window.indexedDB.open('odinochka', 5).onsuccess = function (event) {
-    let db = event.target.result;
+  window.indexedDB.open('odinochka', 5).onsuccess = function (e) {
+    let db = e.target.result;
     let tx = db.transaction('tabgroups', 'readonly');
     let store = tx.objectStore('tabgroups');
 
@@ -213,31 +220,112 @@ function update(data) {
   };
 }
 
-// UI
-
 function updateCount(store) {
   store.index('urls').count().onsuccess = function (e) {
     document.getElementById('size').textContent = e.target.result + ' tabs';
   };
 }
 
-function cssFilter(x) {
-  let node = document.getElementById('cssfilterstyle');
-  let newfiltertxt = x.target.value;
-  if (newfiltertxt == '') {
-    node.innerHTML = '';
-  } else {
-    selector = `a.tab:not([href*="${newfiltertxt}"])`;
-    selector2 = `div.group:not([data-urls*="${newfiltertxt}"])`;
-    node.innerHTML = `${selector}, ${selector2} {display:none}`;
+function removeAndUpdateCount(request, me) {
+  request.onsuccess = function (e) {
+    me.remove();
+    updateCount(request.source);
+  };
+}
+
+// Eventhandler
+
+function divClickHandler(e) {
+  var target = e.target;
+  if (!target) return true;
+
+  if (target.tagName == 'BUTTON' && e.type == 'click') {
+    switch (target.className) {
+      case 'del-tab':
+        tabDelete(e);
+        return false;
+      case 'del-group':
+        groupDelete(e);
+        return false;
+      case 'open-group-tabs':
+        groupOpenTabs(e);
+        return false;
+      case 'open-group-window':
+        groupOpenWindow(e);
+        return false;
+      case 'open-group-list':
+        groupOpenList(e);
+        return false;
+    }
+  } else if (target.className == 'title') {
+    switch (e.type) {
+      case 'click':
+        groupEdit(e);
+        return false;
+      case 'blur':
+        groupBlur(e);
+    }
+  } else if (target.className == 'tab') {
+    switch (e.type) {
+      case 'click':
+        return target.tagName != 'A' || tabClick(e);
+      case 'dragstart':
+        target.id = 'drag';
+        document.body.classList.add('dragging');
+        return true;
+      case 'dragover':
+        e.preventDefault();
+        return true;
+      case 'dragend':
+        target.id = '';
+        document.body.classList.remove('dragging');
+        return true;
+      case 'drop':
+        return drop(e);
+    }
   }
+  console.log(e); // should be impossible
+  return true;
+}
+
+// Tab Events
+
+function tabClick(e) {
+  let me = e.target;
+  let ts = parseInt(me.parentNode.id);
+  let restore = document.forms['options'].elements['restore'].value;
+  let locked = me.parentNode.children[0].textContent.indexOf('lock') > 0;
+  let i = Array.from(me.parentNode.children).indexOf(me) - 1;
+
+  // Youtube popdown
+  //if (e.clientX > me.offsetLeft + me.offsetWidth - 10) {
+  //  makeyt(me);
+  //  return false;
+  //}
+
+  if (e.shiftKey || e.ctrlKey || locked || restore == 'keep') {
+    return true;
+  }
+
+  chrome.tabs.create({url: me.href, pinned: me.target == '_pinned'}, (t) =>
+    deleteTabFromGroup(ts, i, me)
+  );
+  return false;
+}
+
+function tabDelete(e) {
+  let me = e.target.parentNode;
+  let ts = parseInt(me.parentNode.id);
+  let i = Array.from(me.parentNode.children).indexOf(me) - 1;
+  deleteTabFromGroup(ts, i, me);
+  return false;
 }
 
 // Group Events
 
-function groupEdit(event) {
-  let me = event.target;
-  let shiftclick = event.shiftKey;
+function groupEdit(e) {
+  let me = e.target;
+  let shiftclick = e.shiftKey;
 
   if (!shiftclick) {
     if (me.contentEditable == 'false') {
@@ -249,8 +337,8 @@ function groupEdit(event) {
   }
 }
 
-function groupBlur(event) {
-  var me = event.target;
+function groupBlur(e) {
+  var me = e.target;
   var ts = parseInt(me.parentNode.parentNode.id);
 
   if (me.contentEditable != 'true') {
@@ -262,23 +350,23 @@ function groupBlur(event) {
   var oldtxt = me.oldText;
   if (newtxt == oldtxt) return;
 
-  window.indexedDB.open('odinochka', 5).onsuccess = function (event) {
-    var db = event.target.result;
+  window.indexedDB.open('odinochka', 5).onsuccess = function (e) {
+    var db = e.target.result;
     var tx = db.transaction('tabgroups', 'readwrite');
     var store = tx.objectStore('tabgroups');
 
-    store.get(ts).onsuccess = function (event) {
-      var data = event.target.result;
+    store.get(ts).onsuccess = function (e) {
+      var data = e.target.result;
       data.name = newtxt;
       store.put(data).onsuccess = (e) => renderHeader(data, me.parentNode);
     };
   };
 }
 
-function groupDelete(event) {
-  let me = event.target.parentNode;
+function groupDelete(e) {
+  let me = e.target.parentNode;
   let ts = parseInt(me.parentNode.id);
-  let shiftclick = event.shiftKey;
+  let shiftclick = e.shiftKey;
 
   if (!shiftclick) {
     // if not shift, then was x
@@ -286,8 +374,8 @@ function groupDelete(event) {
   }
 
   // delete it
-  window.indexedDB.open('odinochka', 5).onsuccess = function (event) {
-    let db = event.target.result;
+  window.indexedDB.open('odinochka', 5).onsuccess = function (e) {
+    let db = e.target.result;
     let tx = db.transaction('tabgroups', 'readwrite');
     let store = tx.objectStore('tabgroups');
 
@@ -297,8 +385,8 @@ function groupDelete(event) {
       return;
     }
 
-    store.get(ts).onsuccess = function (event) {
-      var data = event.target.result;
+    store.get(ts).onsuccess = function (e) {
+      var data = e.target.result;
 
       // smart selection
       var group = document.forms['options'].elements['group'].value;
@@ -324,19 +412,19 @@ function groupDelete(event) {
   };
 }
 
-function groupOpenList(event) {
-  let me = event.target.parentNode;
+function groupOpenList(e) {
+  let me = e.target.parentNode;
 
   var title = me.parentNode.querySelector('.title').innerHTML;
-  var code = me.parentNode.innerHTML.replace(
-    /draggable="true"|class="tab"|target="_blank"|style="[^"]*"|tabindex="[^"]*"|contenteditable="[^"]*"/g,
-    ''
-  );
+  var regx =
+    /draggable="true"|class="tab"|target="_blank"|style="[^"]*"|tabindex="[^"]*"|contenteditable="[^"]*"|<\s*button[^>]*>(.*?)<\s*\/\s*button>/g;
+  var code = me.parentNode.innerHTML.replace(regx, '');
+
   chrome.tabs.create({
     url:
       'data:text/html;charset=utf-8,' +
       encodeURIComponent(
-        `<html><head><title>${title}</title><style>body{font-family:-apple-system,sans-serif;padding:1rem} a,.title,.info{display:block} .title{font-size:2rem} header{margin-bottom:1rem}</style></head><body>` +
+        `<html><head><title>${title}</title><style>body{font-family:-apple-system,sans-serif;padding:1rem} a,.title,.info{display:block} .title{font-size:2rem;margin:0} header{margin-bottom:1rem}</style></head><body>` +
           code +
           '</body></html>'
       )
@@ -344,42 +432,24 @@ function groupOpenList(event) {
   return false;
 }
 
-/*
-function groupOpenTabs(event) {
-  let me = event.target.parentNode;
+function groupOpenTabs(e) {
+  groupOpen(e, false);
+}
+function groupOpenWindow(e) {
+  groupOpen(e, true);
+}
+
+function groupOpen(e, openwindow) {
+  let me = e.target.parentNode;
   let ts = parseInt(me.parentNode.id);
 
-  window.indexedDB.open('odinochka', 5).onsuccess = function (event) {
-    let db = event.target.result;
+  window.indexedDB.open('odinochka', 5).onsuccess = function (e) {
+    let db = e.target.result;
     let tx = db.transaction('tabgroups', 'readwrite');
     let store = tx.objectStore('tabgroups');
 
-    store.get(ts).onsuccess = function (event) {
-      var data = event.target.result;
-      newTabs(data);
-    };
-  };
-}
-*/
-
-function groupOpenTabs(event) {
-  groupOpen(event, false);
-}
-function groupOpenWindow(event) {
-  groupOpen(event, true);
-}
-
-function groupOpen(event, openwindow) {
-  let me = event.target.parentNode;
-  let ts = parseInt(me.parentNode.id);
-
-  window.indexedDB.open('odinochka', 5).onsuccess = function (event) {
-    let db = event.target.result;
-    let tx = db.transaction('tabgroups', 'readwrite');
-    let store = tx.objectStore('tabgroups');
-
-    store.get(ts).onsuccess = function (event) {
-      var data = event.target.result;
+    store.get(ts).onsuccess = function (e) {
+      var data = e.target.result;
       if (openwindow) {
         newWindow(data);
       } else {
@@ -391,25 +461,18 @@ function groupOpen(event, openwindow) {
 
 // Group Functions
 
-function removeAndUpdateCount(request, me) {
-  request.onsuccess = function (event) {
-    me.remove();
-    updateCount(request.source);
-  };
-}
-
 function deleteTabFromGroup(ts, i, node) {
   // Removes target from DB object
-  window.indexedDB.open('odinochka', 5).onsuccess = function (event) {
-    let db = event.target.result;
+  window.indexedDB.open('odinochka', 5).onsuccess = function (e) {
+    let db = e.target.result;
     let tx = db.transaction('tabgroups', 'readwrite');
     let store = tx.objectStore('tabgroups');
 
     if (i == 0 && node.nextSibling == null) {
       removeAndUpdateCount(store.delete(ts), node.parentNode);
     } else {
-      store.get(ts).onsuccess = function (event) {
-        let data = event.target.result;
+      store.get(ts).onsuccess = function (e) {
+        let data = e.target.result;
 
         data.tabs.splice(i, 1);
         data.urls.splice(i, 1);
@@ -422,13 +485,13 @@ function deleteTabFromGroup(ts, i, node) {
 
 function setGroupCollapse(ts, collapsed) {
   // Set group collapse in DB object
-  window.indexedDB.open('odinochka', 5).onsuccess = function (event) {
-    var db = event.target.result;
+  window.indexedDB.open('odinochka', 5).onsuccess = function (e) {
+    var db = e.target.result;
     var tx = db.transaction('tabgroups', 'readwrite');
     var store = tx.objectStore('tabgroups');
 
-    store.get(ts).onsuccess = function (event) {
-      var data = event.target.result;
+    store.get(ts).onsuccess = function (e) {
+      var data = e.target.result;
       data.collapsed = collapsed;
       store.put(data);
     };
@@ -447,149 +510,22 @@ function setGroupCollapseAll(collapsed) {
   });
 }
 
-// Tab Events
-
-function tabClick(event) {
-  let me = event.target;
-  let ts = parseInt(me.parentNode.id);
-  let restore = document.forms['options'].elements['restore'].value;
-  let locked = me.parentNode.children[0].textContent.indexOf('lock') > 0;
-  let i = Array.from(me.parentNode.children).indexOf(me) - 1;
-
-  // Youtube popdown
-  //if (event.clientX > me.offsetLeft + me.offsetWidth - 10) {
-  //  makeyt(me);
-  //  return false;
-  //}
-
-  if (event.shiftKey || event.ctrlKey || locked || restore == 'keep') {
-    return true;
-  }
-
-  chrome.tabs.create({url: me.href, pinned: me.target == '_pinned'}, (t) =>
-    deleteTabFromGroup(ts, i, me)
-  );
-  return false;
+function groupCollapseAll() {
+  setGroupCollapseAll(1);
 }
-
-function tabDelete(event) {
-  let me = event.target.parentNode;
-  let ts = parseInt(me.parentNode.id);
-  let i = Array.from(me.parentNode.children).indexOf(me) - 1;
-  deleteTabFromGroup(ts, i, me);
-  return false;
-}
-
-// Eventhandler
-
-function divclickhandler(event) {
-  var target = event.target;
-  if (!target) return true;
-
-  if (target.classList.contains('bt-del-tab')) {
-    switch (event.type) {
-      case 'click':
-        tabDelete(event);
-        return false;
-    }
-  } else if (target.classList.contains('bt-del-group')) {
-    switch (event.type) {
-      case 'click':
-        groupDelete(event);
-        return false;
-    }
-  } else if (target.classList.contains('bt-open-group-tabs')) {
-    switch (event.type) {
-      case 'click':
-        groupOpenTabs(event);
-        return false;
-    }
-  } else if (target.classList.contains('bt-open-group-window')) {
-    switch (event.type) {
-      case 'click':
-        groupOpenWindow(event);
-        return false;
-    }
-  } else if (target.classList.contains('bt-open-group-list')) {
-    switch (event.type) {
-      case 'click':
-        groupOpenList(event);
-        return false;
-    }
-  } else if (target.className == 'title') {
-    switch (event.type) {
-      case 'click':
-        groupEdit(event);
-        return false;
-      case 'blur':
-        groupBlur(event);
-    }
-  } else if (target.className == 'tab') {
-    switch (event.type) {
-      case 'click':
-        return target.tagName != 'A' || tabClick(event);
-      //case 'dblclick':
-      //  return target.tagName != 'HEADER' || tabClick(event);
-      case 'dragstart':
-        target.id = 'drag';
-        return true;
-      case 'dragover':
-        event.preventDefault();
-        return true;
-      case 'dragend':
-        target.id = '';
-        return true;
-      case 'drop':
-        return drop(event);
-    }
-  }
-  console.log(event); // should be impossible
-  return true;
-}
-
-// Collapse
-// https://jsfiddle.net/zmirko/oaqprbLh
-function initAccordion(elem, option) {
-  //document.addEventListener('dblclick', function (e) {
-  document.addEventListener('click', function (e) {
-    if (!e.target.matches(elem + ' header.tab')) return;
-    else {
-      if (!e.target.parentElement.classList.contains('active')) {
-        if (option == true) {
-          var elementList = document.querySelectorAll(elem + ' .group');
-          Array.prototype.forEach.call(elementList, function (e) {
-            e.classList.remove('active');
-          });
-        }
-        e.target.parentElement.classList.add('active');
-        setGroupCollapse(parseInt(e.target.parentElement.id), 0);
-      } else {
-        e.target.parentElement.classList.remove('active');
-        setGroupCollapse(parseInt(e.target.parentElement.id), 1);
-      }
-    }
-  });
+function groupExpandAll() {
+  setGroupCollapseAll(0);
 }
 
 // Drag and Drop
 
-function ddextract(node) {
-  return {
-    node: node,
-    parentNode: node.parentNode,
-    id: parseInt(node.parentNode.id),
-    index: Array.from(node.parentNode.children).indexOf(node) - 1, // -1 to adjust for header tag
-    group: node.tagName == 'HEADER'
-  };
-}
+function drop(e) {
+  e.preventDefault();
 
-function drop(event) {
-  event.preventDefault();
-
-  if (event.target.id == 'drag') return; // dropped on itself
+  if (e.target.id == 'drag') return; // dropped on itself
 
   let src = ddextract(document.getElementById('drag'));
-  let tgt = ddextract(event.target);
+  let tgt = ddextract(e.target);
 
   if (src.group && !tgt.group) return; // appending group to link makes no sense.
 
@@ -597,13 +533,13 @@ function drop(event) {
     tgt.parentNode.insertBefore(src.node, tgt.node.nextSibling);
   };
 
-  window.indexedDB.open('odinochka', 5).onsuccess = function (event) {
-    let db = event.target.result;
+  window.indexedDB.open('odinochka', 5).onsuccess = function (e) {
+    let db = e.target.result;
     let tx = db.transaction('tabgroups', 'readwrite');
     let store = tx.objectStore('tabgroups');
 
-    store.get(tgt.id).onsuccess = function (event1) {
-      let tdata = event1.target.result;
+    store.get(tgt.id).onsuccess = function (e1) {
+      let tdata = e1.target.result;
       if (tgt.id == src.id) {
         tdata.tabs.splice(tgt.index + 1, 0, tdata.tabs[src.index]);
         tdata.tabs.splice(src.index + (src.index > tgt.index), 1);
@@ -613,8 +549,8 @@ function drop(event) {
         return;
       }
       // otherwise, cross group drag and drop
-      store.get(src.id).onsuccess = function (event2) {
-        let sdata = event2.target.result;
+      store.get(src.id).onsuccess = function (e2) {
+        let sdata = e2.target.result;
         let callback;
 
         if (src.group && tgt.group) {
@@ -641,12 +577,12 @@ function drop(event) {
 
         let req = store.put(tdata);
         if (sdata.tabs.length > 0) {
-          req.onsuccess = function (event) {
+          req.onsuccess = function (e) {
             store.put(sdata).onsuccess = callback;
           };
         } else {
-          req.onsuccess = function (event) {
-            store.delete(sdata.ts).onsuccess = function (event) {
+          req.onsuccess = function (e) {
+            store.delete(sdata.ts).onsuccess = function (e) {
               let oldParent = src.parentNode;
               callback();
               oldParent.remove();
@@ -658,18 +594,58 @@ function drop(event) {
   };
 }
 
+function ddextract(node) {
+  return {
+    node: node,
+    parentNode: node.parentNode,
+    id: parseInt(node.parentNode.id),
+    index: Array.from(node.parentNode.children).indexOf(node) - 1, // -1 to adjust for header tag
+    group: node.tagName == 'HEADER'
+  };
+}
+
 // Navbar
 
 function initNav() {
-  document.getElementById('bt-collapse').onclick = groupCollapseAll;
-  document.getElementById('bt-expand').onclick = groupExpandAll;
+  document.getElementById('group-collapse-all').onclick = groupCollapseAll;
+  document.getElementById('group-expand-all').onclick = groupExpandAll;
 }
 
-function groupCollapseAll() {
-  setGroupCollapseAll(1);
+// Collapse
+// https://jsfiddle.net/zmirko/oaqprbLh
+function initAccordion(elem, option) {
+  document.addEventListener('click', function (e) {
+    if (!e.target.matches(elem + ' header.tab')) return;
+    else {
+      if (!e.target.parentElement.classList.contains('active')) {
+        if (option == true) {
+          var elementList = document.querySelectorAll(elem + ' .group');
+          Array.prototype.forEach.call(elementList, function (e) {
+            e.classList.remove('active');
+          });
+        }
+        e.target.parentElement.classList.add('active');
+        setGroupCollapse(parseInt(e.target.parentElement.id), 0);
+      } else {
+        e.target.parentElement.classList.remove('active');
+        setGroupCollapse(parseInt(e.target.parentElement.id), 1);
+      }
+    }
+  });
 }
-function groupExpandAll() {
-  setGroupCollapseAll(0);
+
+// Filter
+
+function cssFilter(x) {
+  let node = document.getElementById('cssfilterstyle');
+  let newfiltertxt = x.target.value;
+  if (newfiltertxt == '') {
+    node.innerHTML = '';
+  } else {
+    selector = `a.tab:not([href*="${newfiltertxt}"])`;
+    selector2 = `div.group:not([data-urls*="${newfiltertxt}"])`;
+    node.innerHTML = `${selector}, ${selector2} {display:none}`;
+  }
 }
 
 // Options
@@ -748,11 +724,11 @@ function doImport() {
 
   let reader = new FileReader();
 
-  reader.onload = function (event) {
-    let tabs = JSON.parse(event.target.result);
+  reader.onload = function (e) {
+    let tabs = JSON.parse(e.target.result);
 
-    window.indexedDB.open('odinochka', 5).onsuccess = function (event) {
-      let db = event.target.result;
+    window.indexedDB.open('odinochka', 5).onsuccess = function (e) {
+      let db = e.target.result;
       let tx = db.transaction('tabgroups', 'readwrite');
       let store = tx.objectStore('tabgroups');
 
@@ -773,15 +749,15 @@ function doImport() {
 
 function doExport() {
   let result = [];
-  window.indexedDB.open('odinochka', 5).onsuccess = function (event) {
-    let db = event.target.result;
+  window.indexedDB.open('odinochka', 5).onsuccess = function (e) {
+    let db = e.target.result;
     let tx = db.transaction('tabgroups', 'readonly');
     let store = tx.objectStore('tabgroups');
 
     updateCount(store);
 
-    store.openCursor(null, 'prev').onsuccess = function (event) {
-      let cursor = event.target.result;
+    store.openCursor(null, 'prev').onsuccess = function (e) {
+      let cursor = e.target.result;
       if (cursor) {
         result.push(cursor.value);
         cursor.continue();

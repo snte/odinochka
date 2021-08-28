@@ -1,5 +1,143 @@
+// Installation
+
 chrome.runtime.onInstalled.addListener(function () {
-  // Context Menus on button
+  createContextMenuBrowserAction();
+  createContextMenuPage();
+
+  // Let us open our database
+  var DBOpenRequest = window.indexedDB.open('odinochka', 5);
+
+  DBOpenRequest.onupgradeneeded = function (event) {
+    var db = event.target.result;
+
+    db.onerror = function (event) {
+      console.log('Error loading database.');
+      console.log(event);
+    };
+
+    // Create an objectStore for this database
+    var objectStore = db.createObjectStore('tabgroups', {keyPath: 'ts'});
+
+    // define what data items the objectStore will index
+    objectStore.createIndex('urls', 'urls', {multiEntry: true});
+  };
+
+  chrome.tabs.create({url: 'help.html'});
+});
+
+// Options
+
+var options = {};
+chrome.storage.local.get(
+  {dupe: 'keep', pinned: 'skip', advanced: '', grabfocus: 'always'},
+  (o) => Object.assign(options, o) && doAdvanced(o.advanced)
+);
+
+chrome.storage.onChanged.addListener(function (changes, areaName) {
+  if (areaName != 'local') return;
+  for (let i in changes) options[i] = changes[i].newValue;
+  doAdvanced(options.advanced);
+});
+
+// Command Handler
+
+// Handle clicks to our extension icon
+chrome.browserAction.onClicked.addListener((tab) =>
+  command_handler('odinochka_save_selected')
+);
+
+// Handle context menu clicks
+chrome.contextMenus.onClicked.addListener((details, tab) =>
+  command_handler(details.menuItemId, true, details)
+);
+
+chrome.commands.onCommand.addListener(command_handler);
+
+// Functions
+
+function command_handler(command, showOnSingleTab = false, details = null) {
+  if (command == 'odinochka_show' || command == 'odinochka_show_pg') {
+    showOdinochka();
+  }
+  if (command == 'odinochka_help') {
+    chrome.tabs.create({url: 'help.html'});
+  }
+  if (command == 'odinochka_save_tab' || command == 'odinochka_save_tab_pg') {
+    chrome.tabs.query(
+      {windowId: chrome.windows.WINDOW_ID_CURRENT, active: true},
+      (tab) => saveTabs(tab, false, showOnSingleTab)
+    );
+  }
+  if (command == 'odinochka_save_selected') {
+    chrome.tabs.query(
+      {windowId: chrome.windows.WINDOW_ID_CURRENT, highlighted: true},
+      saveTabs
+    );
+  }
+  if (command == 'odinochka_save_win' || command == 'odinochka_save_win_pg') {
+    chrome.tabs.query({windowId: chrome.windows.WINDOW_ID_CURRENT}, saveTabs);
+  }
+  if (
+    command == 'odinochka_save_win_left' ||
+    command == 'odinochka_save_win_left_pg'
+  ) {
+    // get all the tabs in current window
+    chrome.tabs.query({currentWindow: true}, (tabs) => {
+      let result = [];
+      for (const tab of tabs) {
+        result.push(tab);
+        // stop when reached the active tab
+        if (tab.active) {
+          break;
+        }
+      }
+      saveTabs(result, true);
+    });
+  }
+  if (
+    command == 'odinochka_save_win_right' ||
+    command == 'odinochka_save_win_right_pg'
+  ) {
+    // get all the tabs in current window
+    chrome.tabs.query({currentWindow: true}, (tabs) => {
+      let activeIndex;
+      let result = [];
+      for (const tab of tabs) {
+        // set the activeIndex so we wont have to run a loop on the tabs twice
+        if (tab.active) {
+          activeIndex = tab.index;
+        }
+        // tabs to the right of the active tab will have higher index
+        if (typeof activeIndex !== 'undefined' && tab.index >= activeIndex) {
+          result.push(tab);
+        }
+      }
+      saveTabs(result, true);
+    });
+  }
+
+  if (command == 'odinochka_save_all' || command == 'odinochka_save_all_pg') {
+    chrome.windows.getAll((ws) =>
+      ws.forEach((w) => chrome.tabs.query({windowId: w.id}, saveTabs))
+    );
+  }
+  if (command == 'odinochka_save_link') {
+    saveTabs(
+      [
+        {
+          title: details.linkUrl,
+          url: details.linkUrl,
+          favicon: '',
+          pinned: false
+        }
+      ],
+      false,
+      false
+    );
+  }
+}
+
+function createContextMenuBrowserAction() {
   // Limited to six - see also chrome.contextMenus.ACTION_MENU_TOP_LEVEL_LIMIT
   chrome.contextMenus.create({
     id: 'odinochka_show',
@@ -31,8 +169,8 @@ chrome.runtime.onInstalled.addListener(function () {
     title: 'Help',
     contexts: ['browser_action']
   });
-
-  // Context Menus on page
+}
+function createContextMenuPage() {
   chrome.contextMenus.create({
     id: 'odinochka_save_link',
     title: 'Save link to Odinochka',
@@ -100,27 +238,7 @@ chrome.runtime.onInstalled.addListener(function () {
     parentId: 'parent',
     contexts: ['page']
   });
-
-  // Let us open our database
-  var DBOpenRequest = window.indexedDB.open('odinochka', 5);
-
-  DBOpenRequest.onupgradeneeded = function (event) {
-    var db = event.target.result;
-
-    db.onerror = function (event) {
-      console.log('Error loading database.');
-      console.log(event);
-    };
-
-    // Create an objectStore for this database
-    var objectStore = db.createObjectStore('tabgroups', {keyPath: 'ts'});
-
-    // define what data items the objectStore will index
-    objectStore.createIndex('urls', 'urls', {multiEntry: true});
-  };
-
-  chrome.tabs.create({url: 'help.html'});
-});
+}
 
 function dedupTabs(data) {
   // remove duplicates within group
@@ -132,19 +250,6 @@ function dedupTabs(data) {
   }
   let dup = toDrop.reverse().map((i) => data.tabs.splice(i, 1)[0].url);
   return seen;
-}
-
-function cleanTabData(tab) {
-  if (
-    tab.url.startsWith('chrome-extension') &&
-    tab.url.indexOf('/suspended.html#') > -1
-  ) {
-    tab.url = tab.url.substr(tab.url.lastIndexOf('&uri=') + 5);
-  }
-  tab.url = tab.url.replace(/([?&])utm_[^=]*=[^&]*/g, '$1');
-  if (tab.faviconUrl && tab.favIconUrl.startsWith('chrome-extension'))
-    delete tab.favIconUrl;
-  return tab;
 }
 
 function saveTabs(tabs, newGroup = true, show = true) {
@@ -266,111 +371,17 @@ function saveTabs(tabs, newGroup = true, show = true) {
   };
 }
 
-// options
-var options = {};
-chrome.storage.local.get(
-  {dupe: 'keep', pinned: 'skip', advanced: '', grabfocus: 'always'},
-  (o) => Object.assign(options, o) && doAdvanced(o.advanced)
-);
-
-chrome.storage.onChanged.addListener(function (changes, areaName) {
-  if (areaName != 'local') return;
-  for (let i in changes) options[i] = changes[i].newValue;
-  doAdvanced(options.advanced);
-});
-
-// handle clicks to our extension icon
-chrome.browserAction.onClicked.addListener((tab) =>
-  command_handler('odinochka_save_selected')
-);
-
-// Handle context menu clicks
-chrome.contextMenus.onClicked.addListener((details, tab) =>
-  command_handler(details.menuItemId, true, details)
-);
-
-chrome.commands.onCommand.addListener(command_handler);
-
-function command_handler(command, showOnSingleTab = false, details = null) {
-  if (command == 'odinochka_show' || command == 'odinochka_show_pg') {
-    showOdinochka();
-  }
-  if (command == 'odinochka_help') {
-    chrome.tabs.create({url: 'help.html'});
-  }
-  if (command == 'odinochka_save_tab' || command == 'odinochka_save_tab_pg') {
-    chrome.tabs.query(
-      {windowId: chrome.windows.WINDOW_ID_CURRENT, active: true},
-      (tab) => saveTabs(tab, false, showOnSingleTab)
-    );
-  }
-  if (command == 'odinochka_save_selected') {
-    chrome.tabs.query(
-      {windowId: chrome.windows.WINDOW_ID_CURRENT, highlighted: true},
-      saveTabs
-    );
-  }
-  if (command == 'odinochka_save_win' || command == 'odinochka_save_win_pg') {
-    chrome.tabs.query({windowId: chrome.windows.WINDOW_ID_CURRENT}, saveTabs);
-  }
+function cleanTabData(tab) {
   if (
-    command == 'odinochka_save_win_left' ||
-    command == 'odinochka_save_win_left_pg'
+    tab.url.startsWith('chrome-extension') &&
+    tab.url.indexOf('/suspended.html#') > -1
   ) {
-    // get all the tabs in current window
-    chrome.tabs.query({currentWindow: true}, (tabs) => {
-      let result = [];
-      for (const tab of tabs) {
-        result.push(tab);
-        // stop when reached the active tab
-        if (tab.active) {
-          break;
-        }
-      }
-      saveTabs(result, true);
-    });
+    tab.url = tab.url.substr(tab.url.lastIndexOf('&uri=') + 5);
   }
-  if (
-    command == 'odinochka_save_win_right' ||
-    command == 'odinochka_save_win_right_pg'
-  ) {
-    // get all the tabs in current window
-    chrome.tabs.query({currentWindow: true}, (tabs) => {
-      let activeIndex;
-      let result = [];
-      for (const tab of tabs) {
-        // set the activeIndex so we wont have to run a loop on the tabs twice
-        if (tab.active) {
-          activeIndex = tab.index;
-        }
-        // tabs to the right of the active tab will have higher index
-        if (typeof activeIndex !== 'undefined' && tab.index >= activeIndex) {
-          result.push(tab);
-        }
-      }
-      saveTabs(result, true);
-    });
-  }
-
-  if (command == 'odinochka_save_all' || command == 'odinochka_save_all_pg') {
-    chrome.windows.getAll((ws) =>
-      ws.forEach((w) => chrome.tabs.query({windowId: w.id}, saveTabs))
-    );
-  }
-  if (command == 'odinochka_save_link') {
-    saveTabs(
-      [
-        {
-          title: details.linkUrl,
-          url: details.linkUrl,
-          favicon: '',
-          pinned: false
-        }
-      ],
-      false,
-      false
-    );
-  }
+  tab.url = tab.url.replace(/([?&])utm_[^=]*=[^&]*/g, '$1');
+  if (tab.faviconUrl && tab.favIconUrl.startsWith('chrome-extension'))
+    delete tab.favIconUrl;
+  return tab;
 }
 
 function showOdinochka(callback = null, data = {}) {
@@ -405,7 +416,8 @@ function reloadOdinochka(callback, data = {}) {
   );
 }
 
-// Automated backup to s3
+// Automated Backup to S3
+
 function postTabs(url, method, alarm) {
   let result = [];
   window.indexedDB.open('odinochka', 5).onsuccess = function (event) {
