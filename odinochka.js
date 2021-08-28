@@ -240,6 +240,7 @@ function divClickHandler(e) {
     switch (target.className) {
       case 'del-tab':
         tabDelete(e);
+        e.preventDefault();
         return false;
       case 'del-group':
         groupDelete(e);
