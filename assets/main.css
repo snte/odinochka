@@ -228,8 +228,24 @@ a.tab:hover button {
 .group.active a.tab {
   display: flex;
 }
-.group.active header + a.tab {
-  margin-top: 0.5rem;
+.group.active header.tab {
+  padding-bottom: 0.5rem;
+}
+
+/* Dragging */
+
+a.tab {
+  border-bottom: 1px solid transparent;
+}
+a.tab.drag-over {
+  /*border-top: 1px dashed #ff7c30;*/
+  border-bottom: 1px dashed #ff7c30;
+}
+header.tab + a.tab {
+  border-top: 1px solid transparent;
+}
+header.tab.drag-over + a.tab {
+  border-top: 1px dashed #ff7c30;
 }
 
 /* Options */

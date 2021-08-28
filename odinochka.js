@@ -83,17 +83,14 @@ function render() {
   // Building tab list
   let groupdiv = document.getElementById('groups');
   groupdiv.innerHTML = '';
-  for (var ev of [
-    'click',
-    'dblclick',
-    'dragstart',
-    'dragend',
-    'dragenter',
-    'dragleave',
-    'dragover',
-    'drop'
-  ])
-    groupdiv['on' + ev] = divClickHandler;
+
+  groupdiv.addEventListener('click', divClickHandler);
+  groupdiv.addEventListener('dragstart', divClickHandler);
+  groupdiv.addEventListener('dragend', divClickHandler);
+  groupdiv.addEventListener('dragenter', divClickHandler);
+  groupdiv.addEventListener('dragover', divClickHandler);
+  groupdiv.addEventListener('dragleave', divClickHandler);
+  groupdiv.addEventListener('drop', divClickHandler);
   groupdiv.addEventListener('blur', divClickHandler, true); // onblur won't trigger, but can capture?
 
   window.indexedDB.open('odinochka', 5).onsuccess = function (e) {
@@ -257,7 +254,7 @@ function divClickHandler(e) {
         groupOpenList(e);
         return false;
     }
-  } else if (target.className == 'title') {
+  } else if (target.classList.contains('title')) {
     switch (e.type) {
       case 'click':
         groupEdit(e);
@@ -265,26 +262,37 @@ function divClickHandler(e) {
       case 'blur':
         groupBlur(e);
     }
-  } else if (target.className == 'tab') {
+  } else if (target.classList.contains('tab')) {
     switch (e.type) {
       case 'click':
         return target.tagName != 'A' || tabClick(e);
+
+      // draggable element
       case 'dragstart':
         target.id = 'drag';
-        document.body.classList.add('dragging');
-        return true;
-      case 'dragover':
-        e.preventDefault();
         return true;
       case 'dragend':
         target.id = '';
-        document.body.classList.remove('dragging');
+        return true;
+
+      // drop target
+      case 'dragenter':
+        e.preventDefault();
+        target.classList.add('drag-over');
+        return true;
+      case 'dragover':
+        e.preventDefault();
+        target.classList.add('drag-over');
+        return true;
+      case 'dragleave':
+        target.classList.remove('drag-over');
         return true;
       case 'drop':
+        target.classList.remove('drag-over');
         return drop(e);
     }
   }
-  console.log(e); // should be impossible
+  //console.log(e); // should be impossible
   return true;
 }
 
