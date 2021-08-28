@@ -1,6 +1,6 @@
 {
   "name": "Odinochka",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Open source tab vault",
   "permissions": [
     "alarms",
