@@ -263,33 +263,45 @@ function divClickHandler(e) {
         groupBlur(e);
     }
   } else if (target.classList.contains('tab')) {
+    const groups = document.getElementById('groups');
+
     switch (e.type) {
       case 'click':
         return target.tagName != 'A' || tabClick(e);
 
-      // draggable element
+      // Draggable element
       case 'dragstart':
         target.id = 'drag';
+        groups.dataset.drag = target.tagName;
         return true;
       case 'dragend':
         target.id = '';
+        groups.dataset.drag = '';
         return true;
+    }
 
-      // drop target
-      case 'dragenter':
-        e.preventDefault();
-        target.classList.add('drag-over');
-        return true;
-      case 'dragover':
-        e.preventDefault();
-        target.classList.add('drag-over');
-        return true;
-      case 'dragleave':
-        target.classList.remove('drag-over');
-        return true;
-      case 'drop':
-        target.classList.remove('drag-over');
-        return drop(e);
+    // Disable 'A' drop targets when dragging 'HEADER'
+    if (
+      groups.dataset.drag == 'A' ||
+      (groups.dataset.drag == 'HEADER' && target.tagName == 'HEADER')
+    ) {
+      switch (e.type) {
+        // Drop target
+        case 'dragenter':
+          e.preventDefault();
+          target.classList.add('drag-over');
+          return true;
+        case 'dragover':
+          e.preventDefault();
+          target.classList.add('drag-over');
+          return true;
+        case 'dragleave':
+          target.classList.remove('drag-over');
+          return true;
+        case 'drop':
+          target.classList.remove('drag-over');
+          return drop(e);
+      }
     }
   }
   //console.log(e); // should be impossible
