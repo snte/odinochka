@@ -13,12 +13,12 @@ chrome.runtime.onInstalled.addListener(function () {
   });
   chrome.contextMenus.create({
     id: 'odinochka_save_win_left',
-    title: 'Save all Tabs on Left',
+    title: 'Save all Tabs on Left ←',
     contexts: ['browser_action']
   });
   chrome.contextMenus.create({
     id: 'odinochka_save_win_right',
-    title: 'Save all Tabs on Right',
+    title: 'Save all Tabs on Right →',
     contexts: ['browser_action']
   });
   chrome.contextMenus.create({
@@ -32,11 +32,73 @@ chrome.runtime.onInstalled.addListener(function () {
     contexts: ['browser_action']
   });
 
-  // On page
+  // Context Menus on page
   chrome.contextMenus.create({
     id: 'odinochka_save_link',
     title: 'Save link to Odinochka',
     contexts: ['link']
+  });
+
+  chrome.contextMenus.create({
+    title: 'Odinochka',
+    id: 'parent',
+    contexts: ['page']
+    // Should not be visible on e.g. 'chrome-extension://', not working?
+    //targetUrlPatterns: ['http://*/*', 'https://*/*']
+  });
+  chrome.contextMenus.create({
+    id: 'odinochka_save_tab_pg',
+    title: 'Save Tab',
+    parentId: 'parent',
+    contexts: ['page']
+  });
+  chrome.contextMenus.create({
+    id: 'odinochka_save_win_pg',
+    title: 'Save all Tabs',
+    parentId: 'parent',
+    contexts: ['page']
+  });
+  chrome.contextMenus.create({
+    id: 'sep_2',
+    type: 'separator',
+    parentId: 'parent',
+    contexts: ['page']
+  });
+  chrome.contextMenus.create({
+    id: 'odinochka_save_win_left_pg',
+    title: 'Save all Tabs on Left ←',
+    parentId: 'parent',
+    contexts: ['page']
+  });
+  chrome.contextMenus.create({
+    id: 'odinochka_save_win_right_pg',
+    title: 'Save all Tabs on Right →',
+    parentId: 'parent',
+    contexts: ['page']
+  });
+  chrome.contextMenus.create({
+    id: 'sep_3',
+    type: 'separator',
+    parentId: 'parent',
+    contexts: ['page']
+  });
+  chrome.contextMenus.create({
+    id: 'odinochka_save_all_pg',
+    title: 'Save Tabs from all Windows',
+    parentId: 'parent',
+    contexts: ['page']
+  });
+  chrome.contextMenus.create({
+    id: 'sep_1',
+    type: 'separator',
+    parentId: 'parent',
+    contexts: ['page']
+  });
+  chrome.contextMenus.create({
+    id: 'odinochka_show_pg',
+    title: 'Show Odinochka',
+    parentId: 'parent',
+    contexts: ['page']
   });
 
   // Let us open our database
@@ -230,13 +292,13 @@ chrome.contextMenus.onClicked.addListener((details, tab) =>
 chrome.commands.onCommand.addListener(command_handler);
 
 function command_handler(command, showOnSingleTab = false, details = null) {
-  if (command == 'odinochka_show') {
+  if (command == 'odinochka_show' || command == 'odinochka_show_pg') {
     showOdinochka();
   }
   if (command == 'odinochka_help') {
     chrome.tabs.create({url: 'help.html'});
   }
-  if (command == 'odinochka_save_tab') {
+  if (command == 'odinochka_save_tab' || command == 'odinochka_save_tab_pg') {
     chrome.tabs.query(
       {windowId: chrome.windows.WINDOW_ID_CURRENT, active: true},
       (tab) => saveTabs(tab, false, showOnSingleTab)
@@ -248,10 +310,13 @@ function command_handler(command, showOnSingleTab = false, details = null) {
       saveTabs
     );
   }
-  if (command == 'odinochka_save_win') {
+  if (command == 'odinochka_save_win' || command == 'odinochka_save_win_pg') {
     chrome.tabs.query({windowId: chrome.windows.WINDOW_ID_CURRENT}, saveTabs);
   }
-  if (command == 'odinochka_save_win_left') {
+  if (
+    command == 'odinochka_save_win_left' ||
+    command == 'odinochka_save_win_left_pg'
+  ) {
     // get all the tabs in current window
     chrome.tabs.query({currentWindow: true}, (tabs) => {
       let result = [];
@@ -265,7 +330,10 @@ function command_handler(command, showOnSingleTab = false, details = null) {
       saveTabs(result, true);
     });
   }
-  if (command == 'odinochka_save_win_right') {
+  if (
+    command == 'odinochka_save_win_right' ||
+    command == 'odinochka_save_win_right_pg'
+  ) {
     // get all the tabs in current window
     chrome.tabs.query({currentWindow: true}, (tabs) => {
       let activeIndex;
@@ -284,7 +352,7 @@ function command_handler(command, showOnSingleTab = false, details = null) {
     });
   }
 
-  if (command == 'odinochka_save_all') {
+  if (command == 'odinochka_save_all' || command == 'odinochka_save_all_pg') {
     chrome.windows.getAll((ws) =>
       ws.forEach((w) => chrome.tabs.query({windowId: w.id}, saveTabs))
     );
