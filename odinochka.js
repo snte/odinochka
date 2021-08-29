@@ -142,6 +142,10 @@ function renderHeader(data, header = null) {
   bt4.className = 'open-group-list';
   header.append(bt4);
 
+  let bt5 = document.createElement('button');
+  bt5.className = 'star-group';
+  header.append(bt5);
+
   let date = document.createElement('span');
   date.className = 'info';
   date.textContent = `${fmtDate(data.ts)}`;
@@ -251,6 +255,9 @@ function divClickHandler(e) {
         return false;
       case 'open-group-list':
         groupOpenList(e);
+        return false;
+      case 'star-group':
+        groupStar(e);
         return false;
     }
   } else if (target.classList.contains('title')) {
@@ -472,6 +479,19 @@ function groupOpen(e, openwindow) {
   };
 }
 
+function groupStar(e) {
+  let me = e.target.parentNode;
+  let ts = parseInt(me.parentNode.id);
+
+  if (me.parentNode.classList.contains('star')) {
+    setGroupStar(ts, 0);
+    me.parentNode.classList.remove('star');
+  } else {
+    setGroupStar(ts, 1);
+    me.parentNode.classList.add('star');
+  }
+}
+
 // Group Functions
 
 function deleteTabFromGroup(ts, i, node) {
@@ -528,6 +548,21 @@ function groupCollapseAll() {
 }
 function groupExpandAll() {
   setGroupCollapseAll(0);
+}
+
+function setGroupStar(ts, starred) {
+  // Set group starred in DB object
+  window.indexedDB.open('odinochka', 5).onsuccess = function (e) {
+    var db = e.target.result;
+    var tx = db.transaction('tabgroups', 'readwrite');
+    var store = tx.objectStore('tabgroups');
+
+    store.get(ts).onsuccess = function (e) {
+      var data = e.target.result;
+      data.star = starred;
+      store.put(data);
+    };
+  };
 }
 
 // Drag and Drop

@@ -219,6 +219,12 @@ a.tab:hover button {
 .open-group-list {
   background-image: url(img/wysiwyg_black_24dp.svg);
 }
+.star-group {
+  background-image: url(img/star_black_24dp.svg);
+}
+.group.star .star-group {
+  background-image: url(img/star_outline_black_24dp.svg);
+}
 
 /* Panel style when active */
 .group a.tab {
@@ -264,8 +270,8 @@ header.tab.drag-over {
   padding-left: 2.2rem;
   background-image: url(img/star_black_24dp.svg);
   background-repeat: no-repeat;
-  background-position: left 0.35rem;
-  background-size: 1.6rem;
+  background-position: left 0.37rem;
+  background-size: 1.5rem;
 }
 
 /* Options */
