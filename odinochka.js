@@ -126,25 +126,18 @@ function renderHeader(data, header = null) {
   header.setAttribute('tabindex', '0');
 
   // add buttons
-  let bt1 = document.createElement('button');
-  bt1.className = 'del-group';
-  header.append(bt1);
-
-  let bt2 = document.createElement('button');
-  bt2.className = 'open-group-tabs';
-  header.append(bt2);
-
-  let bt3 = document.createElement('button');
-  bt3.className = 'open-group-window';
-  header.append(bt3);
-
-  let bt4 = document.createElement('button');
-  bt4.className = 'open-group-list';
-  header.append(bt4);
-
-  let bt5 = document.createElement('button');
-  bt5.className = 'star-group';
-  header.append(bt5);
+  const buttons = [
+    'open-group-tabs',
+    'open-group-window',
+    'open-group-list',
+    'star-group',
+    'del-group'
+  ];
+  buttons.forEach(function (button) {
+    let bt = document.createElement('button');
+    bt.className = button;
+    header.append(bt);
+  });
 
   let date = document.createElement('span');
   date.className = 'info';
@@ -352,8 +345,25 @@ function groupEdit(e) {
       me.oldText = me.textContent;
       me.contentEditable = 'true';
       me.focus();
+      me.onkeydown = blurOnEnterKey;
     }
     return;
+  }
+}
+
+function blurOnEnterKey(e) {
+  if (!e) {
+    e = window.event;
+  }
+  var keyCode = e.which || e.keyCode,
+    target = e.target || e.srcElement;
+  if (keyCode === 13) {
+    if (e.preventDefault) {
+      e.preventDefault();
+    } else {
+      e.returnValue = false;
+    }
+    target.blur();
   }
 }
 

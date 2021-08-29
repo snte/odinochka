@@ -52,7 +52,9 @@ a {
 
 .navbar {
   display: flex;
-  justify-content: space-between;
+  flex-wrap: wrap;
+
+  /*justify-content: space-between;*/
 }
 .navbar .logo {
   display: flex;
@@ -74,14 +76,40 @@ a {
 .navbar .bar {
   display: flex;
   align-items: center;
+  margin: 0 auto;
+  margin-bottom: 0.5rem;
 }
-.navbar .info {
-  font-size: 1rem;
-  font-weight: 300;
-  color: #fff;
-  background-color: rgba(180, 184, 204, 0.4);
-  border-radius: 2rem;
-  padding: 0.3rem 1rem;
+.navbar .bar:nth-child(1) {
+  margin-right: auto;
+}
+
+@media only screen and (min-width: 460px) {
+  .navbar .bar {
+    margin: 0;
+    margin-bottom: 0.5rem;
+  }
+  .navbar .bar:nth-child(4) {
+    width: 100%;
+    justify-content: center;
+  }
+}
+@media only screen and (min-width: 760px) {
+  .navbar .bar:nth-child(4) {
+    width: auto;
+  }
+  .navbar .bar:nth-child(3) {
+    order: 4;
+  }
+  .navbar .bar-left > * {
+    margin-right: 0.65rem;
+  }
+  .navbar .bar-right > * {
+    margin-left: 0.65rem;
+  }
+}
+
+.navbar .sidebar-toggle {
+  margin-right: 0.65rem;
 }
 
 .navbar .bar .form-control {
@@ -91,11 +119,16 @@ a {
 .navbar .bar label {
   margin-right: 6px;
 }
-.navbar .bar-left > * {
-  margin-right: 0.65rem;
-}
-.navbar .bar-right > * {
-  margin-left: 0.65rem;
+
+.navbar .info {
+  display: inline-block;
+  font-size: 1rem;
+  font-weight: 300;
+  color: #fff;
+  background-color: rgba(180, 184, 204, 0.4);
+  border-radius: 2rem;
+  padding: 0.3rem 1rem;
+  white-space: nowrap;
 }
 
 .nav {
@@ -156,6 +189,7 @@ header.tab .title {
   font-size: 1.4rem;
   font-weight: 500;
   margin: 0;
+  margin-right: 0.5rem;
 }
 header.tab .info {
   font-size: 0.75rem;
@@ -171,7 +205,7 @@ a.tab {
   padding: 0.4rem;
   padding-left: 2rem;
   background-repeat: no-repeat;
-  background-position: 0.4rem center;
+  background-position: 0.4rem 0.4rem;
   background-size: 16px;
 }
 a.tab:hover {
@@ -188,7 +222,7 @@ a.tab button {
   border: 0;
   background-color: transparent;
   background-repeat: no-repeat;
-  background-size: contain;
+  background-size: 1.2rem;
   background-position: left center;
   opacity: 0.5;
   display: none;
