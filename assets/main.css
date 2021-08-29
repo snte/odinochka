@@ -234,17 +234,22 @@ a.tab:hover button {
 
 /* Dragging */
 
-a.tab {
+a.tab,
+header.tab {
   border-bottom: 1px solid transparent;
 }
-a.tab.drag-over {
-  /*border-top: 1px dashed #ff7c30;*/
+a.tab.drag-over,
+header.tab.drag-over {
   border-bottom: 1px dashed #ff7c30;
 }
-header.tab + a.tab {
+.group.active header.tab,
+.group.active header.tab.drag-over {
+  border-bottom: 0;
+}
+.group.active header.tab + a.tab {
   border-top: 1px solid transparent;
 }
-header.tab.drag-over + a.tab {
+.group.active header.tab.drag-over + a.tab {
   border-top: 1px dashed #ff7c30;
 }
 

@@ -559,8 +559,10 @@ function drop(e) {
     let tx = db.transaction('tabgroups', 'readwrite');
     let store = tx.objectStore('tabgroups');
 
-    store.get(tgt.id).onsuccess = function (e1) {
-      let tdata = e1.target.result;
+    store.get(tgt.id).onsuccess = function (e2) {
+      let tdata = e2.target.result;
+
+      // Same group drag and drop
       if (tgt.id == src.id) {
         tdata.tabs.splice(tgt.index + 1, 0, tdata.tabs[src.index]);
         tdata.tabs.splice(src.index + (src.index > tgt.index), 1);
@@ -569,48 +571,53 @@ function drop(e) {
         store.put(tdata).onsuccess = moveNode;
         return;
       }
-      // otherwise, cross group drag and drop
-      store.get(src.id).onsuccess = function (e2) {
-        let sdata = e2.target.result;
-        let callback;
+      // Cross group drag and drop
+      else {
+        store.get(src.id).onsuccess = function (e3) {
+          let sdata = e3.target.result;
+          let callback;
 
-        if (src.group && tgt.group) {
-          tdata.tabs = tdata.tabs.concat(sdata.tabs);
-          sdata.tabs = [];
-          callback = function () {
-            let toAppend = [];
-            let snode = src.node;
-            while (snode.nextSibling) {
-              toAppend.push(snode.nextSibling);
-              snode = snode.nextSibling;
-            }
-            src.parentNode.innerHTML = ''; //append below triggers N mutationEvents on src, but one on tgt
-            tgt.parentNode.append(...toAppend);
-          };
-        } else {
-          tdata.tabs.splice(tgt.index, 0, sdata.tabs[src.index]);
-          sdata.tabs.splice(src.index, 1);
-          callback = moveNode;
-        }
-
-        tdata.urls = tdata.tabs.map((t) => t.url);
-        sdata.urls = sdata.tabs.map((t) => t.url);
-
-        let req = store.put(tdata);
-        if (sdata.tabs.length > 0) {
-          req.onsuccess = function (e) {
-            store.put(sdata).onsuccess = callback;
-          };
-        } else {
-          req.onsuccess = function (e) {
-            store.delete(sdata.ts).onsuccess = function (e) {
-              let oldParent = src.parentNode;
-              callback();
-              oldParent.remove();
+          // Source and target are groups
+          if (src.group && tgt.group) {
+            // insert source tabs before target tabs
+            tdata.tabs = sdata.tabs.concat(tdata.tabs);
+            sdata.tabs = [];
+            callback = function () {
+              let toAppend = [];
+              let snode = src.node;
+              while (snode.nextSibling) {
+                toAppend.push(snode.nextSibling);
+                snode = snode.nextSibling;
+              }
+              src.parentNode.innerHTML = ''; //append below triggers N mutationEvents on src, but one on tgt
+              // insert tabs after Header
+              tgt.parentNode.firstChild.after(...toAppend);
             };
-          };
-        }
-      };
+          } else {
+            tdata.tabs.splice(tgt.index + 1, 0, sdata.tabs[src.index]);
+            sdata.tabs.splice(src.index, 1);
+            callback = moveNode;
+          }
+
+          tdata.urls = tdata.tabs.map((t) => t.url);
+          sdata.urls = sdata.tabs.map((t) => t.url);
+
+          let req = store.put(tdata);
+          if (sdata.tabs.length > 0) {
+            req.onsuccess = function (e) {
+              store.put(sdata).onsuccess = callback;
+            };
+          } else {
+            req.onsuccess = function (e) {
+              store.delete(sdata.ts).onsuccess = function (e) {
+                let oldParent = src.parentNode;
+                callback();
+                oldParent.remove();
+              };
+            };
+          }
+        };
+      }
     };
   };
 }
