@@ -111,13 +111,6 @@ a {
   transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out,
     border-color 0.15s ease-in-out;
   cursor: pointer;
-}
-.nav-link .link-text {
-  display: none;
-}
-
-#bt-collapse,
-#bt-expand {
   background-repeat: no-repeat;
   background-size: contain;
   background-position: center;
@@ -125,15 +118,17 @@ a {
   width: 1rem;
   height: 1rem;
 }
-#bt-collapse:hover,
-#bt-expand:hover {
+.nav-link:hover {
   opacity: 1;
 }
+.nav-link .link-text {
+  display: none;
+}
 
-#bt-collapse {
+#group-collapse-all {
   background-image: url(img/unfold_less_black_24dp.svg);
 }
-#bt-expand {
+#group-expand-all {
   background-image: url(img/unfold_more_black_24dp.svg);
 }
 
@@ -299,30 +294,3 @@ input[name='importfile'][value]:not([value='']) ~ button[name='import'] {
   width: 100%;
   height: 100%;
 }
-
-/* toggle based on https://alligator.io/css/collapsible/ */
-/*
-footer {
-  position: sticky;
-  background: white;
-  bottom: 0;
-  min-height: 2em;
-  padding-top: 0.5em;
-  padding-bottom: 0.5em;
-  border-top: 1px solid black;
-  margin-bottom: 0;
-}
-
-.lbl-toggle ~ p {
-  display: inline;
-}
-
-form.options,
-input.toggle {
-  display: none;
-}
-
-.toggle:checked + .lbl-toggle + form.options {
-  display: block;
-}
-*/
