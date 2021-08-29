@@ -44,6 +44,8 @@ a {
 }
 #groups {
   padding-bottom: 3rem;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Navbar */
