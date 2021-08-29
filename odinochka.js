@@ -174,11 +174,9 @@ function renderGroup(data, ddiv = null) {
   ddiv.id = data.ts;
   ddiv.innerHTML = '';
 
-  if (data.collapsed == 0) {
-    ddiv.className = 'group active';
-  } else {
-    ddiv.className = 'group';
-  }
+  ddiv.className = 'group';
+  if (data.collapsed == 0) ddiv.classList.add('active');
+  if (data.star == 1) ddiv.classList.add('star');
 
   ddiv.append(renderHeader(data), ...data.tabs.map((x) => renderTab(x)));
 

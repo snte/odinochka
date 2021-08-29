@@ -178,6 +178,8 @@ a.tab:hover {
   background-color: rgba(180, 184, 204, 0.1);
 }
 
+/* Buttons */
+
 header.tab button,
 a.tab button {
   width: 1rem;
@@ -248,6 +250,22 @@ header.tab.drag-over {
 }
 .group.active header.tab.drag-over + a.tab {
   border-top: 1px dashed #ff7c30;
+}
+
+/* Starred */
+
+.group {
+  order: 50;
+}
+.group.star {
+  order: 1;
+}
+.group.star header {
+  padding-left: 2.2rem;
+  background-image: url(img/star_black_24dp.svg);
+  background-repeat: no-repeat;
+  background-position: left 0.35rem;
+  background-size: 1.6rem;
 }
 
 /* Options */

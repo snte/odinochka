@@ -274,6 +274,7 @@ function saveTabs(tabs, newGroup = true, show = true) {
         : {
             ts: new Date().getTime(),
             name: 'Untitled Group',
+            star: 0,
             collapsed: 0,
             tabs: []
           };
