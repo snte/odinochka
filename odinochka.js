@@ -83,17 +83,14 @@ function render() {
   // Building tab list
   let groupdiv = document.getElementById('groups');
   groupdiv.innerHTML = '';
-  for (var ev of [
-    'click',
-    'dblclick',
-    'dragstart',
-    'dragend',
-    'dragenter',
-    'dragleave',
-    'dragover',
-    'drop'
-  ])
-    groupdiv['on' + ev] = divClickHandler;
+
+  groupdiv.addEventListener('click', divClickHandler);
+  groupdiv.addEventListener('dragstart', divClickHandler);
+  groupdiv.addEventListener('dragend', divClickHandler);
+  groupdiv.addEventListener('dragenter', divClickHandler);
+  groupdiv.addEventListener('dragover', divClickHandler);
+  groupdiv.addEventListener('dragleave', divClickHandler);
+  groupdiv.addEventListener('drop', divClickHandler);
   groupdiv.addEventListener('blur', divClickHandler, true); // onblur won't trigger, but can capture?
 
   window.indexedDB.open('odinochka', 5).onsuccess = function (e) {
@@ -243,6 +240,7 @@ function divClickHandler(e) {
     switch (target.className) {
       case 'del-tab':
         tabDelete(e);
+        e.preventDefault();
         return false;
       case 'del-group':
         groupDelete(e);
@@ -257,7 +255,7 @@ function divClickHandler(e) {
         groupOpenList(e);
         return false;
     }
-  } else if (target.className == 'title') {
+  } else if (target.classList.contains('title')) {
     switch (e.type) {
       case 'click':
         groupEdit(e);
@@ -265,26 +263,49 @@ function divClickHandler(e) {
       case 'blur':
         groupBlur(e);
     }
-  } else if (target.className == 'tab') {
+  } else if (target.classList.contains('tab')) {
+    const groups = document.getElementById('groups');
+
     switch (e.type) {
       case 'click':
         return target.tagName != 'A' || tabClick(e);
+
+      // Draggable element
       case 'dragstart':
         target.id = 'drag';
-        document.body.classList.add('dragging');
-        return true;
-      case 'dragover':
-        e.preventDefault();
+        groups.dataset.drag = target.tagName;
         return true;
       case 'dragend':
         target.id = '';
-        document.body.classList.remove('dragging');
+        groups.dataset.drag = '';
         return true;
-      case 'drop':
-        return drop(e);
+    }
+
+    // Disable 'A' drop targets when dragging 'HEADER'
+    if (
+      groups.dataset.drag == 'A' ||
+      (groups.dataset.drag == 'HEADER' && target.tagName == 'HEADER')
+    ) {
+      switch (e.type) {
+        // Drop target
+        case 'dragenter':
+          e.preventDefault();
+          target.classList.add('drag-over');
+          return true;
+        case 'dragover':
+          e.preventDefault();
+          target.classList.add('drag-over');
+          return true;
+        case 'dragleave':
+          target.classList.remove('drag-over');
+          return true;
+        case 'drop':
+          target.classList.remove('drag-over');
+          return drop(e);
+      }
     }
   }
-  console.log(e); // should be impossible
+  //console.log(e); // should be impossible
   return true;
 }
 
@@ -538,8 +559,10 @@ function drop(e) {
     let tx = db.transaction('tabgroups', 'readwrite');
     let store = tx.objectStore('tabgroups');
 
-    store.get(tgt.id).onsuccess = function (e1) {
-      let tdata = e1.target.result;
+    store.get(tgt.id).onsuccess = function (e2) {
+      let tdata = e2.target.result;
+
+      // Same group drag and drop
       if (tgt.id == src.id) {
         tdata.tabs.splice(tgt.index + 1, 0, tdata.tabs[src.index]);
         tdata.tabs.splice(src.index + (src.index > tgt.index), 1);
@@ -548,48 +571,53 @@ function drop(e) {
         store.put(tdata).onsuccess = moveNode;
         return;
       }
-      // otherwise, cross group drag and drop
-      store.get(src.id).onsuccess = function (e2) {
-        let sdata = e2.target.result;
-        let callback;
+      // Cross group drag and drop
+      else {
+        store.get(src.id).onsuccess = function (e3) {
+          let sdata = e3.target.result;
+          let callback;
 
-        if (src.group && tgt.group) {
-          tdata.tabs = tdata.tabs.concat(sdata.tabs);
-          sdata.tabs = [];
-          callback = function () {
-            let toAppend = [];
-            let snode = src.node;
-            while (snode.nextSibling) {
-              toAppend.push(snode.nextSibling);
-              snode = snode.nextSibling;
-            }
-            src.parentNode.innerHTML = ''; //append below triggers N mutationEvents on src, but one on tgt
-            tgt.parentNode.append(...toAppend);
-          };
-        } else {
-          tdata.tabs.splice(tgt.index, 0, sdata.tabs[src.index]);
-          sdata.tabs.splice(src.index, 1);
-          callback = moveNode;
-        }
-
-        tdata.urls = tdata.tabs.map((t) => t.url);
-        sdata.urls = sdata.tabs.map((t) => t.url);
-
-        let req = store.put(tdata);
-        if (sdata.tabs.length > 0) {
-          req.onsuccess = function (e) {
-            store.put(sdata).onsuccess = callback;
-          };
-        } else {
-          req.onsuccess = function (e) {
-            store.delete(sdata.ts).onsuccess = function (e) {
-              let oldParent = src.parentNode;
-              callback();
-              oldParent.remove();
+          // Source and target are groups
+          if (src.group && tgt.group) {
+            // insert source tabs before target tabs
+            tdata.tabs = sdata.tabs.concat(tdata.tabs);
+            sdata.tabs = [];
+            callback = function () {
+              let toAppend = [];
+              let snode = src.node;
+              while (snode.nextSibling) {
+                toAppend.push(snode.nextSibling);
+                snode = snode.nextSibling;
+              }
+              src.parentNode.innerHTML = ''; //append below triggers N mutationEvents on src, but one on tgt
+              // insert tabs after Header
+              tgt.parentNode.firstChild.after(...toAppend);
             };
-          };
-        }
-      };
+          } else {
+            tdata.tabs.splice(tgt.index + 1, 0, sdata.tabs[src.index]);
+            sdata.tabs.splice(src.index, 1);
+            callback = moveNode;
+          }
+
+          tdata.urls = tdata.tabs.map((t) => t.url);
+          sdata.urls = sdata.tabs.map((t) => t.url);
+
+          let req = store.put(tdata);
+          if (sdata.tabs.length > 0) {
+            req.onsuccess = function (e) {
+              store.put(sdata).onsuccess = callback;
+            };
+          } else {
+            req.onsuccess = function (e) {
+              store.delete(sdata.ts).onsuccess = function (e) {
+                let oldParent = src.parentNode;
+                callback();
+                oldParent.remove();
+              };
+            };
+          }
+        };
+      }
     };
   };
 }
