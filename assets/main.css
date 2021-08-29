@@ -264,10 +264,10 @@ header.tab.drag-over {
   order: -1;
 }
 .group.star header {
-  padding-left: 2.2rem;
+  padding-left: 2.3rem;
   background-image: url(img/star_black_24dp.svg);
   background-repeat: no-repeat;
-  background-position: left 0.37rem;
+  background-position: 0.2rem 0.37rem;
   background-size: 1.5rem;
 }
 
