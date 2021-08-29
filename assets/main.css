@@ -260,11 +260,8 @@ header.tab.drag-over {
 
 /* Starred */
 
-.group {
-  order: 50;
-}
 .group.star {
-  order: 1;
+  order: -1;
 }
 .group.star header {
   padding-left: 2.2rem;
