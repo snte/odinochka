@@ -181,8 +181,29 @@ header.tab {
   padding: 0.35rem;
   cursor: pointer;
 }
-header.tab:hover {
+
+/* header tab hover on after element to allow flexible sizing of background */
+header.tab {
+  position: relative;
+}
+header.tab:hover::after {
+  content: '';
+  display: block;
+  position: absolute;
+  z-index: -5;
   background-color: rgba(180, 184, 204, 0.1);
+  width: 100%;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+}
+/* larger padding-bottom on expanded group, allows spacing to list, yet no gap */
+.group.active header.tab {
+  padding-bottom: 0.5rem;
+}
+.group.active header.tab:hover::after {
+  bottom: 0.15rem;
 }
 
 header.tab .title {
@@ -210,6 +231,13 @@ a.tab {
 }
 a.tab:hover {
   background-color: rgba(180, 184, 204, 0.1);
+}
+
+.group a.tab {
+  display: none;
+}
+.group.active a.tab {
+  display: flex;
 }
 
 /* Buttons */
@@ -258,17 +286,6 @@ a.tab:hover button {
 }
 .group.star .star-group {
   background-image: url(img/star_outline_black_24dp.svg);
-}
-
-/* Panel style when active */
-.group a.tab {
-  display: none;
-}
-.group.active a.tab {
-  display: flex;
-}
-.group.active header.tab {
-  padding-bottom: 0.5rem;
 }
 
 /* Dragging */
