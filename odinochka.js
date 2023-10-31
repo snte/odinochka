@@ -169,8 +169,8 @@ function renderTab(tab, a = null) {
 function renderGroup(data, ddiv = null) {
   ddiv = ddiv || document.createElement('div');
   ddiv.id = data.ts;
+  ddiv.setAttribute('data-name', data.name);
   ddiv.innerHTML = '';
-
   ddiv.className = 'group';
   if (data.collapsed == 0) ddiv.classList.add('active');
   if (data.star == 1) ddiv.classList.add('star');
@@ -307,6 +307,36 @@ function divClickHandler(e) {
   return true;
 }
 
+// Sorting
+
+function groupSortAbc() {
+  var groups = document.querySelectorAll('.group');
+
+  /*
+  [].slice.call(groups).sort(function(a, b) {
+      var textA = a.getAttribute('data-name').toLowerCase()
+      var textB = b.getAttribute('data-name').toLowerCase()
+      return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
+  })
+    .forEach(function(el) {el.parentNode.appendChild(el)});
+  */
+
+  Array.from(groups).sort((a, b) =>
+    a.dataset.name.toLowerCase().localeCompare(b.dataset.name.toLowerCase())
+  )
+    .forEach(el => el.parentNode.appendChild(el));
+
+}
+function groupSortId() {
+  var groups = document.querySelectorAll('.group');
+
+  Array.from(groups).sort((a, b) =>
+    a.id.localeCompare(b.id)
+  )
+    .forEach(el => el.parentNode.appendChild(el));
+
+}
+
 // Tab Events
 
 function tabClick(e) {
@@ -379,6 +409,8 @@ function groupBlur(e) {
   var newtxt = me.textContent;
   var oldtxt = me.oldText;
   if (newtxt == oldtxt) return;
+
+  me.parentNode.parentNode.setAttribute('data-name', newtxt);
 
   window.indexedDB.open('odinochka', 5).onsuccess = function (e) {
     var db = e.target.result;
@@ -674,6 +706,8 @@ function ddextract(node) {
 function initNav() {
   document.getElementById('group-collapse-all').onclick = groupCollapseAll;
   document.getElementById('group-expand-all').onclick = groupExpandAll;
+  document.getElementById('group-sort-abc').onclick = groupSortAbc;
+  document.getElementById('group-sort-id').onclick = groupSortId;
 }
 
 // Collapse

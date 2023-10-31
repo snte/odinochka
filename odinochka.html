@@ -135,41 +135,75 @@
     </div>
 
     <div id="main" class="main">
-      <nav id="header" class="navbar">
-        <div class="bar bar-left">
-          <div class="sidebar-toggle">
-            <span class="openbtn" id="bt-sidebar-open">
-              <img src="assets/img/menu_black_24dp.svg" />
-            </span>
+      <nav id="header" class="navbar row">
+        <div class="block block-left block-logo">
+          <div class="logo-and-toggle">
+            <div class="sidebar-toggle">
+              <!--
+              <span class="openbtn" id="bt-sidebar-open">
+                <img src="assets/img/menu_black_24dp.svg" />
+              </span>
+              -->
+              <a class="nav-link" id="bt-sidebar-open" title="Settings">
+                <span class="link-text">Settings</span>
+              </a>
+            </div>
+            <h1 class="logo">
+              <strong>Odin</strong>
+              <em>ochka</em>
+            </h1>
           </div>
-          <h1 class="logo">
-            <strong>Odin</strong>
-            <em>ochka</em>
-          </h1>
         </div>
-        <div class="bar bar-right">
+
+        <div class="block block-right block-info">
           <div><span class="info" id="size"></span></div>
         </div>
-        <div class="bar bar-right">
+
+        <div class="block block-right block-filter">
+          <div>
+            <label>Filter</label>
+            <input
+              type="text"
+              class="form-control"
+              name="filter"
+              id="filter"
+              placeholder="Filter"
+            />
+          </div>
+        </div>
+
+        <div class="block block-right block-buttons">
           <div>
             <ul class="nav">
               <li>
-                <a class="nav-link" id="group-collapse-all">
+                <a
+                  class="nav-link"
+                  id="group-sort-abc"
+                  title="Sort alphabetically"
+                >
+                  <span class="link-text">Sort ABC</span>
+                </a>
+              </li>
+              <li>
+                <a class="nav-link" id="group-sort-id" title="Sort by date">
+                  <span class="link-text">Sort ID</span>
+                </a>
+              </li>
+              <li>
+                <a
+                  class="nav-link"
+                  id="group-collapse-all"
+                  title="Collapse all"
+                >
                   <span class="link-text">Collapse</span>
                 </a>
               </li>
               <li>
-                <a class="nav-link" id="group-expand-all">
+                <a class="nav-link" id="group-expand-all" title="Expand all">
                   <span class="link-text">Expand</span>
                 </a>
               </li>
             </ul>
-          </div>
-        </div>
-        <div class="bar bar-right">
-          <div>
-            <label>Filter</label>
-            <input type="text" class="form-control" name="filter" id="filter" />
           </div>
         </div>
       </nav>
